@@ -216,6 +216,15 @@ class MemberController extends Controller
             // Clean primary member number
             $data['member_no'] = strtoupper(preg_replace('/\s+/', '', $data['member_no']));
 
+            $spouseFirstName = trim((string) $request->input('spouse_first_name'));
+            $spouseLastName  = trim((string) $request->input('spouse_last_name'));
+
+            $hasSpouse = $spouseFirstName !== '' || $spouseLastName !== '';
+
+            $amounts = $this->calculateMemberAmounts($data['membership_type_id'], $hasSpouse);
+
+            $data['amount'] = $amounts['primary_amount'];
+
             if ($request->hasFile('photo')) {
                 $path = $request->file('photo')->store('members', 'public');
                 $data['photo_path'] = $path;
@@ -282,7 +291,7 @@ class MemberController extends Controller
 
                 // Avoid duplicate photo and amount
                 $spouseData['photo_path'] = null;
-                $spouseData['amount'] = null;
+                $spouseData['amount'] = $amounts['spouse_amount'];
 
                 $spouseData['created_by'] = Auth::id();
                 $spouseData['updated_by'] = Auth::id();
@@ -345,6 +354,16 @@ class MemberController extends Controller
         try {
             // Clean primary member number
             $data['member_no'] = strtoupper(preg_replace('/\s+/', '', $data['member_no']));
+            $spouseFirstName = trim((string) $request->input('spouse_first_name'));
+            $spouseLastName  = trim((string) $request->input('spouse_last_name'));
+            $spouseMemberNo  = trim((string) $request->input('spouse_member_no'));
+            $spouseMemberId  = $request->input('spouse_member_id');
+
+            $hasSpouse = $spouseFirstName !== '' || $spouseLastName !== '' || $spouseMemberNo !== '' || $spouseMemberId;
+
+            $amounts = $this->calculateMemberAmounts($data['membership_type_id'], $hasSpouse);
+
+            $data['amount'] = $amounts['primary_amount'];
 
             if ($request->hasFile('photo')) {
                 if ($member->photo_path) {
@@ -427,7 +446,7 @@ class MemberController extends Controller
                     'notes'                 => null,
                     'photo_path'            => null,
                     'receipt_no'            => $member->receipt_no,
-                    'amount'                => null,
+                    'amount'                => $amounts['spouse_amount'],
                     'updated_by'            => Auth::id(),
                 ];
                 if ($spouseMemberId) {
@@ -722,6 +741,30 @@ class MemberController extends Controller
         }
 
         return $this->getNextMemberNo();
+
+    } // End Method
+
+    private function calculateMemberAmounts($membershipTypeId, bool $hasSpouse): array
+    {
+        $membershipType = MembershipType::find($membershipTypeId);
+
+        $totalAmount = $membershipType ? (float) $membershipType->fee_amount : 0;
+
+        if ($hasSpouse && $totalAmount > 0) {
+            $splitAmount = round($totalAmount / 2, 2);
+
+            return [
+                'primary_amount' => $splitAmount,
+                'spouse_amount'  => $splitAmount,
+                'total_amount'   => $totalAmount,
+            ];
+        }
+
+        return [
+            'primary_amount' => $totalAmount,
+            'spouse_amount'  => null,
+            'total_amount'   => $totalAmount,
+        ];
 
     } // End Method
 }
