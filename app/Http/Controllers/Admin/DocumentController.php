@@ -98,6 +98,16 @@ class DocumentController extends Controller
 
         $president = OfficeBearer::where('position','President')->first();
 
+        $presidentSignatureFile = public_path(
+            'images/org/president_signature.png'
+        );
+
+        $presidentSignatureExists = file_exists($presidentSignatureFile);
+
+        $presidentSignaturePath = $presidentSignatureExists
+            ? str_replace('\\', '/', $presidentSignatureFile)
+            : null;
+
         //$org->founder_photo_base64 = $this->getImageBase64(public_path($org->founder_photo));
 
         //$org->logo_base64 = $this->getImageBase64(public_path($org->logo));
@@ -116,6 +126,8 @@ class DocumentController extends Controller
             'org' => $org,
             'officeBearers' => $officeBearers,
             'president' => $president,
+            'presidentSignaturePath' => $presidentSignaturePath,
+            'presidentSignatureExists' => $presidentSignatureExists,
             'today' => now()->format('F j, Y')
         ])->render();
 

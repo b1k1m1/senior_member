@@ -233,8 +233,19 @@ INDO-AMERICAN SENIORS ORGANIZATION OF NEW JERSEY
 
 Sincerely yours,
 
-<br><br><br>
+<br><br>
 
+@if($presidentSignatureExists && $presidentSignaturePath)
+    <img
+        src="{{ $presidentSignaturePath }}"
+        alt="President Signature"
+        style="width: 150px; height: auto; display: block;"
+    >
+@else
+    <br><br>
+@endif
+
+<div style="margin-top: 5px;">
 {{ $president->name }}
 
 <br>
