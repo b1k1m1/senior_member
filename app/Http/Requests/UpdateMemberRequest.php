@@ -58,7 +58,18 @@ class UpdateMemberRequest extends FormRequest
             'notes' => 'nullable|string',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
 
-            'receipt_no' => 'nullable|string|max:30',
+            'receipt_no' => [
+                'required',
+                'regex:/^\d{6}$/',
+                Rule::unique('receipts', 'receipt_no')->ignore(
+                    optional(\App\Models\Receipt::where('receipt_no', $this->route('member')?->receipt_no)->first())->id
+                ),
+            ],
+
+            'payment_mode' => 'required|in:CASH,CHECK,CREDIT_CARD',
+            'bank_name' => 'nullable|string|max:255',
+            'check_number' => 'nullable|string|max:255',
+            'check_date' => 'nullable|date',
         ];
     }
 
@@ -77,6 +88,8 @@ class UpdateMemberRequest extends FormRequest
 
             'membership_type_id.required' => 'Membership type is required.',
             'membership_type_id.exists' => 'Selected membership type is invalid.',
+            'receipt_no.regex' => 'Receipt number must be 6 digits only, for example 005001.',
+            'receipt_no.unique' => 'This receipt number already exists.',
         ];
     }
 }

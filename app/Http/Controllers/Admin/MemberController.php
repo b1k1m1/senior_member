@@ -15,6 +15,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Session;
 use Maatwebsite\Excel\Concerns\ToArray;
 use Illuminate\Support\Facades\DB;
+use App\Models\Receipt;
+use App\Models\ReceiptType;
 
 class MemberController extends Controller
 {
@@ -197,14 +199,128 @@ class MemberController extends Controller
 
         $nextMemberNo = $this->getNextMemberNo();
         $nextSpouseMemberNo = $this->incrementMemberNo($nextMemberNo);
+        $nextReceiptNo = $this->getNextReceiptNo();
 
         return view('admin.members.create', compact(
             'membershipTypes',
             'nextMemberNo',
-            'nextSpouseMemberNo'
+            'nextSpouseMemberNo',
+            'nextReceiptNo'
         ));
 
     } // End Method
+
+    // public function store(StoreMemberRequest $request)
+
+    // {
+    //     'receipt_no' => 'required|regex:/^\d{6}$/|unique:receipts,receipt_no',
+    //     $data = $request->validated();
+
+    //     DB::beginTransaction();
+
+    //     try {
+    //         // Clean primary member number
+    //         $data['member_no'] = strtoupper(preg_replace('/\s+/', '', $data['member_no']));
+
+    //         $spouseFirstName = trim((string) $request->input('spouse_first_name'));
+    //         $spouseLastName  = trim((string) $request->input('spouse_last_name'));
+
+    //         $hasSpouse = $spouseFirstName !== '' || $spouseLastName !== '';
+
+    //         $amounts = $this->calculateMemberAmounts($data['membership_type_id'], $hasSpouse);
+
+    //         $data['amount'] = $amounts['primary_amount'];
+
+    //         if ($request->hasFile('photo')) {
+    //             $path = $request->file('photo')->store('members', 'public');
+    //             $data['photo_path'] = $path;
+    //         }
+
+    //         $data['created_by'] = Auth::id();
+    //         $data['updated_by'] = Auth::id();
+
+    //         // Create primary member
+    //         $primaryMember = Member::create($data);
+
+    //         /*
+    //             If spouse first name or spouse last name is entered,
+    //             create spouse as a separate member record.
+    //          */
+    //         $spouseFirstName = trim((string) $request->input('spouse_first_name'));
+    //         $spouseLastName  = trim((string) $request->input('spouse_last_name'));
+
+    //         if ($spouseFirstName !== '' || $spouseLastName !== '') {
+
+    //             $spouseMemberNo = trim((string) $request->input('spouse_member_no'));
+
+    //             if ($spouseMemberNo === '') {
+    //                 $spouseMemberNo = $this->incrementMemberNo($data['member_no']);
+    //             }
+
+    //             $spouseMemberNo = strtoupper(preg_replace('/\s+/', '', $spouseMemberNo));
+
+    //             if ($spouseLastName === '') {
+    //                 $spouseLastName = $data['last_name'];
+    //             }
+
+    //             $spouseData = $data;
+
+    //             $spouseData['member_no'] = $spouseMemberNo;
+    //             $spouseData['first_name'] = $spouseFirstName ?: 'Unknown';
+    //             $spouseData['last_name'] = $spouseLastName;
+
+    //             // Spouse's own personal/contact data
+    //             $spouseData['dateofbirth'] = $request->input('spouse_dateofbirth') ?: null;
+    //             $spouseData['email'] = $request->input('spouse_email') ?: null;
+    //             $spouseData['cell_phone'] = $request->input('spouse_cell_phone') ?: null;
+
+    //             // Share primary address/contact fields
+    //             $spouseData['phone'] = $data['phone'] ?? null;
+    //             $spouseData['address1'] = $data['address1'] ?? null;
+    //             $spouseData['address2'] = $data['address2'] ?? null;
+    //             $spouseData['city'] = $data['city'] ?? null;
+    //             $spouseData['state'] = $data['state'] ?? null;
+    //             $spouseData['zip'] = $data['zip'] ?? null;
+    //             $spouseData['county'] = $data['county'] ?? null;
+
+    //             // Do not store spouse fields again on spouse row
+    //             $spouseData['spouse_first_name'] = null;
+    //             $spouseData['spouse_last_name'] = null;
+
+    //             // Same membership / receipt
+    //             $spouseData['membership_type_id'] = $data['membership_type_id'];
+    //             $spouseData['membership_start_date'] = $data['membership_start_date'] ?? null;
+    //             $spouseData['joining_year'] = $data['joining_year'] ?? null;
+
+    //             $spouseData['receipt_no'] = $data['receipt_no'] ?? null;
+    //             $spouseData['status'] = $data['status'] ?? 'ACTIVE';
+    //             $spouseData['status_reason'] = $data['status_reason'] ?? null;
+
+    //             // Avoid duplicate photo and amount
+    //             $spouseData['photo_path'] = null;
+    //             $spouseData['amount'] = $amounts['spouse_amount'];
+
+    //             $spouseData['created_by'] = Auth::id();
+    //             $spouseData['updated_by'] = Auth::id();
+
+    //             Member::create($spouseData);
+    //         }
+
+    //         DB::commit();
+
+    //         return redirect()->route('admin.members.index')
+    //             ->with('success', 'Member created successfully.');
+
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+
+    //         return redirect()
+    //             ->back()
+    //             ->withInput()
+    //             ->with('error', 'Member creation failed: ' . $e->getMessage());
+    //     }
+
+    // } // End Method
 
     public function store(StoreMemberRequest $request)
     {
@@ -213,18 +329,42 @@ class MemberController extends Controller
         DB::beginTransaction();
 
         try {
-            // Clean primary member number
+            /*
+            |--------------------------------------------------------------------------
+            | Clean primary member number and receipt number
+            |--------------------------------------------------------------------------
+            */
             $data['member_no'] = strtoupper(preg_replace('/\s+/', '', $data['member_no']));
 
+            if (!empty($data['receipt_no'])) {
+                $data['receipt_no'] = preg_replace('/\D/', '', $data['receipt_no']);
+                $data['receipt_no'] = str_pad($data['receipt_no'], 6, '0', STR_PAD_LEFT);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Determine if spouse exists
+            |--------------------------------------------------------------------------
+            */
             $spouseFirstName = trim((string) $request->input('spouse_first_name'));
             $spouseLastName  = trim((string) $request->input('spouse_last_name'));
 
             $hasSpouse = $spouseFirstName !== '' || $spouseLastName !== '';
 
+            /*
+            |--------------------------------------------------------------------------
+            | Calculate amounts
+            |--------------------------------------------------------------------------
+            */
             $amounts = $this->calculateMemberAmounts($data['membership_type_id'], $hasSpouse);
 
             $data['amount'] = $amounts['primary_amount'];
 
+            /*
+            |--------------------------------------------------------------------------
+            | Upload primary member photo
+            |--------------------------------------------------------------------------
+            */
             if ($request->hasFile('photo')) {
                 $path = $request->file('photo')->store('members', 'public');
                 $data['photo_path'] = $path;
@@ -233,16 +373,18 @@ class MemberController extends Controller
             $data['created_by'] = Auth::id();
             $data['updated_by'] = Auth::id();
 
-            // Create primary member
+            /*
+            |--------------------------------------------------------------------------
+            | Create primary member
+            |--------------------------------------------------------------------------
+            */
             $primaryMember = Member::create($data);
 
             /*
-                If spouse first name or spouse last name is entered,
-                create spouse as a separate member record.
-             */
-            $spouseFirstName = trim((string) $request->input('spouse_first_name'));
-            $spouseLastName  = trim((string) $request->input('spouse_last_name'));
-
+            |--------------------------------------------------------------------------
+            | Create spouse member if spouse first name or last name is entered
+            |--------------------------------------------------------------------------
+            */
             if ($spouseFirstName !== '' || $spouseLastName !== '') {
 
                 $spouseMemberNo = trim((string) $request->input('spouse_member_no'));
@@ -289,7 +431,7 @@ class MemberController extends Controller
                 $spouseData['status'] = $data['status'] ?? 'ACTIVE';
                 $spouseData['status_reason'] = $data['status_reason'] ?? null;
 
-                // Avoid duplicate photo and amount
+                // Avoid duplicate photo and set spouse amount
                 $spouseData['photo_path'] = null;
                 $spouseData['amount'] = $amounts['spouse_amount'];
 
@@ -297,6 +439,71 @@ class MemberController extends Controller
                 $spouseData['updated_by'] = Auth::id();
 
                 Member::create($spouseData);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Create receipt row
+            |--------------------------------------------------------------------------
+            | This is important because next receipt number is generated from receipts table.
+            | Without this insert, member create will keep showing the same receipt number.
+            |--------------------------------------------------------------------------
+            */
+            if (!empty($data['receipt_no'])) {
+
+                $receiptType = ReceiptType::where('code', 'MEMBERSHIP')->first();
+
+                if (!$receiptType) {
+                    throw new \Exception('Receipt type MEMBERSHIP was not found. Please create it in receipt_types table.');
+                }
+
+                $totalReceiptAmount = $amounts['primary_amount'] + $amounts['spouse_amount'];
+
+                if (!empty($data['receipt_no'])) {
+
+                    $receiptType = ReceiptType::where('code', 'MEMBERSHIP')->first();
+
+                    if (!$receiptType) {
+                        throw new \Exception('Receipt type MEMBERSHIP was not found. Please create it in receipt_types table.');
+                    }
+
+                    $paymentMode = $data['payment_mode'] ?? 'CASH';
+
+                    $bankName = null;
+                    $checkNumber = null;
+                    $checkDate = null;
+
+                    if ($paymentMode === 'CHECK') {
+                        $bankName = $data['bank_name'] ?? null;
+                        $checkNumber = $data['check_number'] ?? null;
+                        $checkDate = $data['check_date'] ?? null;
+                    }
+
+                    $totalReceiptAmount = $amounts['primary_amount'] + $amounts['spouse_amount'];
+
+                    Receipt::create([
+                        'receipt_no' => $data['receipt_no'],
+                        'receipt_type_id' => $receiptType->id,
+                        'received_from' => trim($data['first_name'] . ' ' . $data['last_name']),
+                        'address1' => $data['address1'] ?? null,
+                        'address2' => $data['address2'] ?? null,
+                        'city' => $data['city'] ?? null,
+                        'state' => $data['state'] ?? null,
+                        'zip' => $data['zip'] ?? null,
+                        'county' => $data['county'] ?? null,
+                        'bank_name' => $bankName,
+                        'check_date' => $checkDate,
+                        'check_number' => $checkNumber,
+                        'payment_mode' => $paymentMode,
+                        'amount' => $totalReceiptAmount,
+                        'remarks' => 'Membership receipt created from member entry.',
+                        'member_id' => $primaryMember->id,
+                        'membership_type_id' => $data['membership_type_id'] ?? null,
+                        'has_spouse' => $hasSpouse ? 1 : 0,
+                        'created_by' => Auth::id(),
+                        'updated_by' => Auth::id(),
+                    ]);
+                }
             }
 
             DB::commit();
@@ -337,10 +544,22 @@ class MemberController extends Controller
                 ->first();
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Load receipt record connected with this member receipt_no
+        |--------------------------------------------------------------------------
+        */
+        $receipt = null;
+
+        if (!empty($member->receipt_no)) {
+            $receipt = Receipt::where('receipt_no', $member->receipt_no)->first();
+        }
+
         return view('admin.members.edit', compact(
             'member',
             'membershipTypes',
-            'spouseMember'
+            'spouseMember',
+            'receipt'
         ));
 
     } // End Method
@@ -352,8 +571,20 @@ class MemberController extends Controller
         DB::beginTransaction();
 
         try {
-            // Clean primary member number
+            /*
+            |--------------------------------------------------------------------------
+            | Clean primary member number and receipt number
+            |--------------------------------------------------------------------------
+            */
+            $oldReceiptNo = $member->receipt_no;
+
             $data['member_no'] = strtoupper(preg_replace('/\s+/', '', $data['member_no']));
+
+            if (!empty($data['receipt_no'])) {
+                $data['receipt_no'] = preg_replace('/\D/', '', $data['receipt_no']);
+                $data['receipt_no'] = str_pad($data['receipt_no'], 6, '0', STR_PAD_LEFT);
+            }
+
             $spouseFirstName = trim((string) $request->input('spouse_first_name'));
             $spouseLastName  = trim((string) $request->input('spouse_last_name'));
             $spouseMemberNo  = trim((string) $request->input('spouse_member_no'));
@@ -361,10 +592,20 @@ class MemberController extends Controller
 
             $hasSpouse = $spouseFirstName !== '' || $spouseLastName !== '' || $spouseMemberNo !== '' || $spouseMemberId;
 
+            /*
+            |--------------------------------------------------------------------------
+            | Calculate amounts
+            |--------------------------------------------------------------------------
+            */
             $amounts = $this->calculateMemberAmounts($data['membership_type_id'], $hasSpouse);
 
             $data['amount'] = $amounts['primary_amount'];
 
+            /*
+            |--------------------------------------------------------------------------
+            | Upload photo
+            |--------------------------------------------------------------------------
+            */
             if ($request->hasFile('photo')) {
                 if ($member->photo_path) {
                     Storage::disk('public')->delete($member->photo_path);
@@ -376,17 +617,19 @@ class MemberController extends Controller
 
             $data['updated_by'] = Auth::id();
 
-            // Update primary member
+            /*
+            |--------------------------------------------------------------------------
+            | Update primary member
+            |--------------------------------------------------------------------------
+            */
             $member->update($data);
+            $member->refresh();
 
             /*
-                Spouse update/create logic
+            |--------------------------------------------------------------------------
+            | Spouse update/create logic
+            |--------------------------------------------------------------------------
             */
-            $spouseFirstName = trim((string) $request->input('spouse_first_name'));
-            $spouseLastName  = trim((string) $request->input('spouse_last_name'));
-            $spouseMemberNo  = trim((string) $request->input('spouse_member_no'));
-            $spouseMemberId  = $request->input('spouse_member_id');
-
             $spouseMemberNo = strtoupper(preg_replace('/\s+/', '', $spouseMemberNo));
 
             if ($spouseFirstName !== '' || $spouseLastName !== '' || $spouseMemberNo !== '') {
@@ -399,7 +642,11 @@ class MemberController extends Controller
                     $spouseLastName = $member->last_name;
                 }
 
-                // Check duplicate spouse member no, ignoring spouse's own record
+                /*
+                |--------------------------------------------------------------------------
+                | Check duplicate spouse member no, ignoring spouse's own record
+                |--------------------------------------------------------------------------
+                */
                 $duplicateSpouseNo = Member::where('member_no', $spouseMemberNo)
                     ->when($spouseMemberId, function ($query) use ($spouseMemberId) {
                         $query->where('id', '!=', $spouseMemberId);
@@ -417,6 +664,7 @@ class MemberController extends Controller
                             'spouse_member_no' => 'This spouse member number already exists.',
                         ]);
                 }
+
                 $spouseData = [
                     'member_no'             => $spouseMemberNo,
                     'first_name'            => $spouseFirstName ?: 'Unknown',
@@ -449,6 +697,7 @@ class MemberController extends Controller
                     'amount'                => $amounts['spouse_amount'],
                     'updated_by'            => Auth::id(),
                 ];
+
                 if ($spouseMemberId) {
                     $spouseMember = Member::find($spouseMemberId);
 
@@ -461,12 +710,97 @@ class MemberController extends Controller
                     Member::create($spouseData);
                 }
 
-                // Also keep spouse info on primary record for reference
+                /*
+                |--------------------------------------------------------------------------
+                | Also keep spouse info on primary record for reference
+                |--------------------------------------------------------------------------
+                */
                 $member->update([
                     'spouse_first_name' => $spouseFirstName,
                     'spouse_last_name'  => $spouseLastName,
                     'updated_by'        => Auth::id(),
                 ]);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update spouse receipt_no if receipt number was changed
+            |--------------------------------------------------------------------------
+            */
+            if ($oldReceiptNo !== $member->receipt_no) {
+                Member::where('receipt_no', $oldReceiptNo)
+                    ->where('id', '!=', $member->id)
+                    ->update([
+                        'receipt_no' => $member->receipt_no,
+                        'updated_by' => Auth::id(),
+                    ]);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update or create receipt row
+            |--------------------------------------------------------------------------
+            */
+            if (!empty($member->receipt_no)) {
+
+                $receiptType = ReceiptType::where('code', 'MEMBERSHIP')->first();
+
+                if (!$receiptType) {
+                    throw new \Exception('Receipt type MEMBERSHIP was not found. Please create it in receipt_types table.');
+                }
+
+                $paymentMode = $data['payment_mode'] ?? 'CASH';
+
+                $bankName = null;
+                $checkNumber = null;
+                $checkDate = null;
+
+                if ($paymentMode === 'CHECK') {
+                    $bankName = $data['bank_name'] ?? null;
+                    $checkNumber = $data['check_number'] ?? null;
+                    $checkDate = $data['check_date'] ?? null;
+                }
+
+                $totalReceiptAmount = $amounts['primary_amount'] + $amounts['spouse_amount'];
+
+                $receipt = null;
+
+                if (!empty($oldReceiptNo)) {
+                    $receipt = Receipt::where('receipt_no', $oldReceiptNo)->first();
+                }
+
+                if (!$receipt) {
+                    $receipt = Receipt::where('receipt_no', $member->receipt_no)->first();
+                }
+
+                $receiptData = [
+                    'receipt_no' => $member->receipt_no,
+                    'receipt_type_id' => $receiptType->id,
+                    'received_from' => trim($member->first_name . ' ' . $member->last_name),
+                    'address1' => $member->address1,
+                    'address2' => $member->address2,
+                    'city' => $member->city,
+                    'state' => $member->state,
+                    'zip' => $member->zip,
+                    'county' => $member->county,
+                    'bank_name' => $bankName,
+                    'check_date' => $checkDate,
+                    'check_number' => $checkNumber,
+                    'payment_mode' => $paymentMode,
+                    'amount' => $totalReceiptAmount,
+                    'remarks' => 'Membership receipt updated from member entry.',
+                    'member_id' => $member->id,
+                    'membership_type_id' => $member->membership_type_id,
+                    'has_spouse' => $hasSpouse ? 1 : 0,
+                    'updated_by' => Auth::id(),
+                ];
+
+                if ($receipt) {
+                    $receipt->update($receiptData);
+                } else {
+                    $receiptData['created_by'] = Auth::id();
+                    Receipt::create($receiptData);
+                }
             }
 
             DB::commit();
@@ -765,6 +1099,18 @@ class MemberController extends Controller
             'spouse_amount'  => null,
             'total_amount'   => $totalAmount,
         ];
+
+    } // End Method
+
+    private function getNextReceiptNo(): string
+    {
+        $lastReceiptNo = \App\Models\Receipt::query()
+            ->selectRaw('MAX(CAST(receipt_no AS UNSIGNED)) as max_receipt_no')
+            ->value('max_receipt_no');
+
+        $nextReceiptNo = ((int) $lastReceiptNo) + 1;
+
+        return str_pad($nextReceiptNo, 6, '0', STR_PAD_LEFT);
 
     } // End Method
 }

@@ -29,109 +29,191 @@
 
             <div class="tab-content p-3" id="memberTabsContent">
                 <div class="tab-pane fade show active" id="personal" role="tabpanel">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Member No *</label>
-                            <input type="text"
-                                name="member_no"
-                                class="form-control"
-                                data-uppercase
-                                required
-                                value="{{ old('member_no', $nextMemberNo ?? '') }}">
+                {{-- Primary Member Information --}}
+                <div class="card border mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-user me-1"></i> Primary Member Information
+                        </h6>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Member No *</label>
+                                <input type="text"
+                                    name="member_no"
+                                    class="form-control"
+                                    data-uppercase
+                                    required
+                                    value="{{ old('member_no', $nextMemberNo ?? '') }}">
+
                                 <small class="text-muted">
                                     Suggested next member number. You can change it before saving.
                                 </small>
-                            @error('member_no')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Photo</label>
-                            <input type="file" name="photo" class="form-control" accept="image/*">
-                        </div>
+                                @error('member_no')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">First Name *</label>
-                            <input type="text" name="first_name" class="form-control" data-uppercase required value="{{ old('first_name') }}">
-                            @error('first_name')
-                            <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Photo</label>
+                                <input type="file" name="photo" class="form-control" accept="image/*">
+                            </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Last Name *</label>
-                            <input type="text" name="last_name" class="form-control" data-uppercase required value="{{ old('last_name') }}">
-                            @error('last_name')
-                            <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Date of Birth</label>
-                            <input type="date" name="dateofbirth" class="form-control" value="{{ old('dateofbirth') }}">
-                        </div>
-                                                <div class="col-md-6 mb-3">
-                            <label class="form-label">Spouse Member No</label>
-                            <input type="text"
-                                name="spouse_member_no"
-                                class="form-control"
-                                data-uppercase
-                                value="{{ old('spouse_member_no', $nextSpouseMemberNo ?? '') }}">
-                            <small class="text-muted">
-                                Used only if spouse name is entered. You can change this number before saving.
-                            </small>
-                            @error('spouse_member_no')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">First Name *</label>
+                                <input type="text"
+                                    name="first_name"
+                                    class="form-control"
+                                    data-uppercase
+                                    required
+                                    value="{{ old('first_name') }}">
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Spouse First Name</label>
-                            <input type="text"
-                                name="spouse_first_name"
-                                class="form-control"
-                                data-uppercase
-                                value="{{ old('spouse_first_name') }}">
-                        </div>
+                                @error('first_name')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Spouse Last Name</label>
-                            <input type="text"
-                                name="spouse_last_name"
-                                class="form-control"
-                                data-uppercase
-                                value="{{ old('spouse_last_name') }}">
-                        </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Last Name *</label>
+                                <input type="text"
+                                    name="last_name"
+                                    class="form-control"
+                                    data-uppercase
+                                    required
+                                    value="{{ old('last_name') }}">
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Spouse Date of Birth</label>
-                            <input type="date"
-                                name="spouse_dateofbirth"
-                                class="form-control"
-                                value="{{ old('spouse_dateofbirth') }}">
-                        </div>
+                                @error('last_name')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
 
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label">Notes</label>
-                            <textarea name="notes" class="form-control" rows="3">{{ old('notes') }}</textarea>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date"
+                                    name="dateofbirth"
+                                    class="form-control"
+                                    value="{{ old('dateofbirth') }}">
+                            </div>
+
                         </div>
                     </div>
                 </div>
 
+
+                {{-- Spouse Member Information --}}
+                <div class="card border mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-user-friends me-1"></i> Spouse Member Information
+                        </h6>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Spouse Member No</label>
+                                <input type="text"
+                                    name="spouse_member_no"
+                                    class="form-control"
+                                    data-uppercase
+                                    value="{{ old('spouse_member_no', $nextSpouseMemberNo ?? '') }}">
+
+                                <small class="text-muted">
+                                    Used only if spouse name is entered. You can change this number before saving.
+                                </small>
+
+                                @error('spouse_member_no')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Spouse Date of Birth</label>
+                                <input type="date"
+                                    name="spouse_dateofbirth"
+                                    class="form-control"
+                                    value="{{ old('spouse_dateofbirth') }}">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Spouse First Name</label>
+                                <input type="text"
+                                    name="spouse_first_name"
+                                    class="form-control"
+                                    data-uppercase
+                                    value="{{ old('spouse_first_name') }}">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Spouse Last Name</label>
+                                <input type="text"
+                                    name="spouse_last_name"
+                                    class="form-control"
+                                    data-uppercase
+                                    value="{{ old('spouse_last_name') }}">
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+
+                    {{-- Notes --}}
+                    <div class="card border">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="fas fa-sticky-note me-1"></i> Notes
+                            </h6>
+                        </div>
+
+                        <div class="card-body">
+                            <textarea name="notes"
+                                    class="form-control"
+                                    rows="3">{{ old('notes') }}</textarea>
+                        </div>
+                    </div>
+
+            </div>
+
                 <div class="tab-pane fade" id="membership" role="tabpanel">
                     <div class="row">
+
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Membership Type *</label>
                             <select name="membership_type_id" class="form-select" required>
                                 <option value="">Select Type</option>
                                 @foreach($membershipTypes as $type)
-                                <option value="{{ $type->id }}" {{ old('membership_type_id') == $type->id ? 'selected' : '' }}>
-                                    {{ $type->name }} (${{ number_format($type->fee_amount, 2) }})
-                                </option>
+                                    <option value="{{ $type->id }}" {{ old('membership_type_id') == $type->id ? 'selected' : '' }}>
+                                        {{ $type->name }} (${{ number_format($type->fee_amount, 2) }})
+                                    </option>
                                 @endforeach
                             </select>
+
                             @error('membership_type_id')
-                            <div class="text-danger">{{ $message }}</div>
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Receipt No</label>
+                            <input type="text"
+                                name="receipt_no"
+                                id="receipt_no"
+                                class="form-control"
+                                value="{{ old('receipt_no', $nextReceiptNo ?? '') }}"
+                                maxlength="6">
+
+                            <small class="text-muted">
+                                Suggested next receipt number from receipt table. You can change it before saving.
+                            </small>
+
+                            @error('receipt_no')
+                                <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
 
@@ -155,81 +237,217 @@
 
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Membership Start Date</label>
-                            <input type="date" name="membership_start_date" class="form-control" value="{{ old('membership_start_date') }}">
+                            <input type="date"
+                                name="membership_start_date"
+                                class="form-control"
+                                value="{{ old('membership_start_date') }}">
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Receipt No</label>
-                            <input type="text" name="receipt_no" class="form-control" value="{{ old('receipt_no') }}">
-                        </div>
-                    </div>
-                </div>
+                            <label class="form-label">Payment Mode *</label>
+                            <select name="payment_mode"
+                                    id="payment_mode"
+                                    class="form-select"
+                                    required>
+                                <option value="CASH" {{ old('payment_mode', 'CASH') == 'CASH' ? 'selected' : '' }}>Cash</option>
+                                <option value="CHECK" {{ old('payment_mode') == 'CHECK' ? 'selected' : '' }}>Check</option>
+                                <option value="CREDIT_CARD" {{ old('payment_mode') == 'CREDIT_CARD' ? 'selected' : '' }}>Credit Card</option>
+                            </select>
 
-                <div class="tab-pane fade" id="contact" role="tabpanel">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="email" class="form-control" value="{{ old('email') }}">
-                            @error('email')
-                            <div class="text-danger">{{ $message }}</div>
+                            @error('payment_mode')
+                                <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Phone</label>
-                            <input type="text" name="phone" class="form-control" value="{{ old('phone') }}">
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Cell Phone</label>
-                            <input type="text" name="cell_phone" class="form-control" value="{{ old('cell_phone') }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Spouse Email</label>
-                            <input type="email"
-                                name="spouse_email"
-                                class="form-control"
-                                value="{{ old('spouse_email') }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Spouse Cell Phone</label>
+                        <div class="col-md-4 mb-3 check-fields">
+                            <label class="form-label">Bank Name</label>
                             <input type="text"
-                                name="spouse_cell_phone"
+                                name="bank_name"
                                 class="form-control"
-                                value="{{ old('spouse_cell_phone') }}">
+                                value="{{ old('bank_name') }}"
+                                maxlength="255">
+
+                            @error('bank_name')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
                         </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Address 1</label>
-                            <input type="text" name="address1" class="form-control" value="{{ old('address1') }}">
+                        <div class="col-md-4 mb-3 check-fields">
+                            <label class="form-label">Check Number</label>
+                            <input type="text"
+                                name="check_number"
+                                class="form-control"
+                                value="{{ old('check_number') }}"
+                                maxlength="255">
+
+                            @error('check_number')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
                         </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Address 2</label>
-                            <input type="text" name="address2" class="form-control" value="{{ old('address2') }}">
+                        <div class="col-md-4 mb-3 check-fields">
+                            <label class="form-label">Check Date</label>
+                            <input type="date"
+                                name="check_date"
+                                class="form-control"
+                                value="{{ old('check_date') }}">
+
+                            @error('check_date')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
                         </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">City</label>
-                            <input type="text" name="city" class="form-control" value="{{ old('city') }}">
-                        </div>
-
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">State</label>
-                            <input type="text" name="state" class="form-control" value="{{ old('state') }}">
-                        </div>
-
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Zip</label>
-                            <input type="text" name="zip" class="form-control" value="{{ old('zip') }}">
-                        </div>
-
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">County</label>
-                            <input type="text" name="county" class="form-control" value="{{ old('county') }}">
-                        </div>
                     </div>
                 </div>
+
+                </div>
+                <div class="tab-pane fade" id="contact" role="tabpanel">
+
+                    {{-- Primary Contact Information --}}
+                    <div class="card border mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="fas fa-address-card me-1"></i> Primary Contact Information
+                            </h6>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="row">
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email"
+                                        name="email"
+                                        class="form-control"
+                                        value="{{ old('email') }}">
+
+                                    @error('email')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Phone</label>
+                                    <input type="text"
+                                        name="phone"
+                                        class="form-control"
+                                        value="{{ old('phone') }}">
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Cell Phone</label>
+                                    <input type="text"
+                                        name="cell_phone"
+                                        class="form-control"
+                                        value="{{ old('cell_phone') }}">
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+
+                    {{-- Spouse Contact Information --}}
+                    <div class="card border mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="fas fa-user-friends me-1"></i> Spouse Contact Information
+                            </h6>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="row">
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Spouse Email</label>
+                                    <input type="email"
+                                        name="spouse_email"
+                                        class="form-control"
+                                        value="{{ old('spouse_email') }}">
+
+                                    @error('spouse_email')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Spouse Cell Phone</label>
+                                    <input type="text"
+                                        name="spouse_cell_phone"
+                                        class="form-control"
+                                        value="{{ old('spouse_cell_phone') }}">
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+
+                    {{-- Shared Address Information --}}
+                    <div class="card border">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="fas fa-home me-1"></i> Shared Address Information
+                            </h6>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="row">
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Address 1</label>
+                                    <input type="text"
+                                        name="address1"
+                                        class="form-control"
+                                        value="{{ old('address1') }}">
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Address 2</label>
+                                    <input type="text"
+                                        name="address2"
+                                        class="form-control"
+                                        value="{{ old('address2') }}">
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">City</label>
+                                    <input type="text"
+                                        name="city"
+                                        class="form-control"
+                                        value="{{ old('city') }}">
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">State</label>
+                                    <input type="text"
+                                        name="state"
+                                        class="form-control"
+                                        value="{{ old('state') }}">
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">Zip</label>
+                                    <input type="text"
+                                        name="zip"
+                                        class="form-control"
+                                        value="{{ old('zip') }}">
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">County</label>
+                                    <input type="text"
+                                        name="county"
+                                        class="form-control"
+                                        value="{{ old('county') }}">
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
             </div>
 
             <div class="d-flex justify-content-end gap-2">
@@ -240,12 +458,34 @@
     </div>
 </div>
 @endsection
+<style>
+    #memberTabsContent .card-header h6 {
+        font-weight: 600;
+        color: #1f3b64;
+    }
+
+    #memberTabsContent .card {
+        box-shadow: none;
+        border-color: #d9e2ef !important;
+    }
+
+    #memberTabsContent .card-header {
+        padding: 0.65rem 1rem;
+        border-bottom: 1px solid #d9e2ef;
+    }
+
+    #memberTabsContent .card-body {
+        padding-bottom: 0.5rem;
+    }
+</style>
 
 @section('scripts')
 <script>
 $(document).ready(function() {
+
     function toggleStatusReason() {
         var status = $('#status-select').val();
+
         if (status === 'INACTIVE') {
             $('#status-reason-div').show();
         } else {
@@ -256,6 +496,52 @@ $(document).ready(function() {
 
     $('#status-select').change(toggleStatusReason);
     toggleStatusReason();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Show check fields only when payment mode is CHECK
+    |--------------------------------------------------------------------------
+    */
+    function toggleCheckFields() {
+        var paymentMode = $('#payment_mode').val();
+
+        if (paymentMode === 'CHECK') {
+            $('.check-fields').show();
+        } else {
+            $('.check-fields').hide();
+
+            $('input[name="bank_name"]').val('');
+            $('input[name="check_number"]').val('');
+            $('input[name="check_date"]').val('');
+        }
+    }
+
+    $('#payment_mode').on('change', toggleCheckFields);
+    toggleCheckFields();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Receipt No: numeric only, 6 digits
+    |--------------------------------------------------------------------------
+    */
+    $('#receipt_no').on('input', function () {
+        let value = $(this).val().replace(/\D/g, '');
+
+        if (value.length > 6) {
+            value = value.substring(0, 6);
+        }
+
+        $(this).val(value);
+    });
+
+    $('#receipt_no').on('blur', function () {
+        let value = $(this).val().replace(/\D/g, '');
+
+        if (value !== '') {
+            $(this).val(value.padStart(6, '0'));
+        }
+    });
+
 });
 </script>
 @endsection

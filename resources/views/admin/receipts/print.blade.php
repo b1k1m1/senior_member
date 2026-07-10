@@ -4,176 +4,403 @@
     <meta charset="utf-8">
     <title>Receipt - {{ $receipt->receipt_no }}</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 12px; line-height: 1.4; color: #333; }
-        .container { width: 100%; max-width: 700px; margin: 0 auto; padding: 20px; }
-        
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; border-bottom: 3px solid #1e3a5f; padding-bottom: 15px; }
-        .founder-section { width: 20%; text-align: center; }
-        .founder-section img { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid #1e3a5f; }
-        .founder-section .name { font-size: 10px; font-weight: bold; color: #1e3a5f; margin-top: 5px; }
-        
-        .org-section { width: 55%; text-align: center; padding: 0 15px; }
-        .org-section .org-name { font-size: 20px; font-weight: bold; color: #1e3a5f; margin-bottom: 10px; }
-        .org-section .org-details { font-size: 10px; color: #555; line-height: 1.8; }
-        
-        .logo-section { width: 20%; text-align: right; }
-        .logo-section img { width: 90px; height: 90px; object-fit: contain; }
-        
-        .content-section { display: flex; margin-top: 20px; }
-        .left-section { width: 35%; border-right: 1px solid #ddd; padding-right: 15px; }
-        .right-section { width: 65%; padding-left: 15px; }
-        
-        .section-title { font-size: 11px; font-weight: bold; color: #1e3a5f; margin-bottom: 10px; text-transform: uppercase; border-bottom: 1px solid #1e3a5f; padding-bottom: 3px; }
-        
-        .office-bearer { margin-bottom: 12px; }
-        .office-bearer .name { font-weight: bold; font-size: 11px; }
-        .office-bearer .title { font-size: 9px; color: #666; }
-        
-        .receipt-box { border: 2px solid #1e3a5f; border-radius: 8px; padding: 20px; }
-        .receipt-title { font-size: 16px; font-weight: bold; color: #1e3a5f; text-align: center; margin-bottom: 20px; text-transform: uppercase; }
-        
-        .receipt-details { width: 100%; }
-        .receipt-details tr { border-bottom: 1px solid #eee; }
-        .receipt-details tr:last-child { border-bottom: none; }
-        .receipt-details td { padding: 8px 5px; }
-        .receipt-details td.label { font-weight: bold; width: 40%; color: #555; }
-        .receipt-details td.value { text-align: right; }
-        
-        .total-row { background-color: #1e3a5f; color: white; }
-        .total-row td { font-weight: bold; font-size: 14px; }
-        
-        .welcome-box { background-color: #f8f9fa; border-left: 4px solid #1e3a5f; padding: 15px; margin-top: 20px; }
-        .welcome-box p { font-size: 11px; color: #555; font-style: italic; }
-        
-        .footer { margin-top: 30px; text-align: center; font-size: 9px; color: #888; border-top: 1px solid #ddd; padding-top: 10px; }
-        
-        @media print {
-            body { -webkit-print-color-adjust: exact; }
-            .container { padding: 0; }
+    @page {
+        size: A4 portrait;
+        margin: 10mm;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 11px;
+        line-height: 1.25;
+        color: #333;
+        background: #fff;
+    }
+
+    .container {
+        width: 100%;
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 5px;
+    }
+
+    .header {
+        width: 100%;
+        border-bottom: 2px solid #1e3a5f;
+        padding-bottom: 8px;
+        margin-bottom: 10px;
+        display: table;
+    }
+
+    .logo-section {
+        display: table-cell;
+        width: 90px;
+        vertical-align: top;
+        text-align: left;
+    }
+
+    .logo-section img {
+        max-width: 70px;
+        max-height: 60px;
+        object-fit: contain;
+    }
+
+    .org-section {
+        display: table-cell;
+        vertical-align: top;
+        text-align: center;
+        padding: 0 8px;
+    }
+
+    .org-name {
+        font-size: 17px;
+        font-weight: bold;
+        color: #1e3a5f;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+    }
+
+    .org-details {
+        font-size: 10px;
+        color: #555;
+        line-height: 1.35;
+    }
+
+    .receipt-box {
+        border: 2px solid #1e3a5f;
+        border-radius: 5px;
+        padding: 16px;
+        margin-top: 12px;
+        min-height: 165mm;
+    }
+
+    .receipt-title {
+        font-size: 16px;
+        font-weight: bold;
+        color: #1e3a5f;
+        text-align: center;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .receipt-details {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .receipt-details td {
+        padding: 5px 6px;
+        border-bottom: 1px solid #e5e5e5;
+        vertical-align: top;
+    }
+
+    .receipt-details tr:last-child td {
+        border-bottom: none;
+    }
+
+    .receipt-details td.label {
+        width: 32%;
+        font-weight: bold;
+        color: #444;
+    }
+
+    .receipt-details td.value {
+        width: 68%;
+        text-align: left;
+        color: #222;
+    }
+
+    .amount-row td {
+        background-color: #1e3a5f;
+        color: #fff !important;
+        font-weight: bold;
+        font-size: 13px;
+        border-bottom: none;
+        padding: 6px;
+    }
+
+    .amount-row td.value {
+        text-align: right;
+    }
+
+    .remarks-box {
+        margin-top: 10px;
+        border: 1px solid #ddd;
+        padding: 8px;
+        min-height: 35px;
+        background: #fafafa;
+    }
+
+    .remarks-title {
+        font-weight: bold;
+        color: #1e3a5f;
+        margin-bottom: 3px;
+    }
+
+    .footer {
+        margin-top: 12px;
+        text-align: center;
+        font-size: 9px;
+        color: #777;
+        border-top: 1px solid #ddd;
+        padding-top: 6px;
+        line-height: 1.25;
+    }
+
+    .print-button-area {
+        text-align: right;
+        margin-bottom: 8px;
+    }
+
+    .print-button {
+        background: #1e3a5f;
+        color: #fff;
+        border: none;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+
+    @media print {
+        html,
+        body {
+            width: 210mm;
+            min-height: 297mm;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
+
+        body {
+            font-size: 10.5px;
+            line-height: 1.2;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        .print-button-area {
+            display: none;
+        }
+
+        .receipt-box {
+            page-break-inside: avoid;
+        }
+
+        .header,
+        .footer {
+            page-break-inside: avoid;
+        }
+    }
     </style>
-</head>
+    </head>
+
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="founder-section">
-                @if($org && $org->founder_photo)
-                <img src="{{ public_path('storage/' . $org->founder_photo) }}" alt="Founder">
-                @else
-                <div style="width:70px;height:70px;background:#ddd;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;">
-                    <span style="font-size:24px;color:#999;">👤</span>
-                </div>
-                @endif
-                <div class="name">{{ $org->founder_name ?? 'Founder' }}</div>
-            </div>
-            
-            <div class="org-section">
-                <div class="org-name">{{ $org->name ?? 'Organization Name' }}</div>
-                <div class="org-details">
-                    {{ $org->address ?? '' }}<br>
-                    Phone: {{ $org->phone ?? '' }} | Email: {{ $org->email ?? '' }}<br>
-                    Tax ID: {{ $org->tax_id ?? '' }} | Reg. No: {{ $org->registration_no ?? '' }}
-                </div>
-            </div>
-            
-            <div class="logo-section">
-                @if($org && $org->logo)
-                <img src="{{ public_path('storage/' . $org->logo) }}" alt="Logo">
-                @endif
-            </div>
-        </div>
-        
-        <!-- Content -->
-        <div class="content-section">
-            <!-- Left: Office Bearers -->
-            <div class="left-section">
-                <div class="section-title">Current Office Bearers</div>
-                @foreach($officeBearers as $bearer)
-                <div class="office-bearer">
-                    <div class="name">{{ $bearer->name }}</div>
-                    <div class="title">{{ $bearer->position }}</div>
-                </div>
-                @endforeach
-            </div>
-            
-            <!-- Right: Receipt -->
-            <div class="right-section">
-                <div class="receipt-box">
-                    <div class="receipt-title">Official Receipt</div>
-                    <table class="receipt-details">
-                        <tr>
-                            <td class="label">Receipt No:</td>
-                            <td class="value">{{ $receipt->receipt_no }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Date:</td>
-                            <td class="value">{{ $receipt->created_at->format('F j, Y') }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Received From:</td>
-                            <td class="value">{{ $receipt->received_from }}</td>
-                        </tr>
-                        @if($receipt->address1)
-                        <tr>
-                            <td class="label">Address:</td>
-                            <td class="value">
-                                {{ $receipt->address1 }}<br>
-                                {{ $receipt->city }}, {{ $receipt->state }} {{ $receipt->zip }}
-                            </td>
-                        </tr>
-                        @endif
-                        <tr>
-                            <td class="label">Payment Mode:</td>
-                            <td class="value">{{ $receipt->payment_mode }}</td>
-                        </tr>
-                        @if($receipt->bank_name)
-                        <tr>
-                            <td class="label">Bank:</td>
-                            <td class="value">{{ $receipt->bank_name }}</td>
-                        </tr>
-                        @endif
-                        @if($receipt->check_number)
-                        <tr>
-                            <td class="label">Check No:</td>
-                            <td class="value">{{ $receipt->check_number }} @if($receipt->check_date)({{ $receipt->check_date->format('M j, Y') }})@endif</td>
-                        </tr>
-                        @endif
-                        @if($receipt->receiptType)
-                        <tr>
-                            <td class="label">For:</td>
-                            <td class="value">{{ $receipt->receiptType->name }}</td>
-                        </tr>
-                        @endif
-                        @if($receipt->event)
-                        <tr>
-                            <td class="label">Event:</td>
-                            <td class="value">{{ $receipt->event->title }}</td>
-                        </tr>
-                        @endif
-                        <tr class="total-row">
-                            <td class="label">Amount Received:</td>
-                            <td class="value">${{ number_format($receipt->amount, 2) }}</td>
-                        </tr>
-                    </table>
-                </div>
-                
-                @if($receipt->receiptType && $receipt->receiptType->code === 'MEMBERSHIP')
-                <div class="welcome-box">
-                    <p>{{ $org->welcome_message ?? 'Welcome to our organization! We are delighted to have you as a member.' }}</p>
-                </div>
-                @endif
-            </div>
-        </div>
-        
-        <!-- Footer -->
-        <div class="footer">
-            <p>This is a computer-generated document. No signature required.</p>
-            <p>{{ $org->name ?? '' }} | {{ $org->website ?? '' }}</p>
-        </div>
+
+<div class="container">
+
+    <div class="print-button-area">
+        <button type="button" class="print-button" onclick="window.print();">
+            Print Receipt
+        </button>
     </div>
-    
-    <script>window.print();</script>
+
+    {{-- Header --}}
+    <div class="header">
+
+        <div class="logo-section">
+            @if($org && !empty($org->logo) && file_exists(public_path('storage/' . $org->logo)))
+                <img src="{{ asset('storage/' . $org->logo) }}" alt="Logo">
+            @endif
+        </div>
+
+        <div class="org-section">
+            <div class="org-name">
+                {{ $org->name ?? 'Organization Name' }}
+            </div>
+
+            <div class="org-details">
+                @if(!empty($org->address))
+                    {{ $org->address }}<br>
+                @endif
+
+                @if(!empty($org->phone) || !empty($org->email))
+                    @if(!empty($org->phone))
+                        Phone: {{ $org->phone }}
+                    @endif
+
+                    @if(!empty($org->phone) && !empty($org->email))
+                        |
+                    @endif
+
+                    @if(!empty($org->email))
+                        Email: {{ $org->email }}
+                    @endif
+
+                    <br>
+                @endif
+
+                @if(!empty($org->tax_id) || !empty($org->registration_no))
+                    @if(!empty($org->tax_id))
+                        Tax ID: {{ $org->tax_id }}
+                    @endif
+
+                    @if(!empty($org->tax_id) && !empty($org->registration_no))
+                        |
+                    @endif
+
+                    @if(!empty($org->registration_no))
+                        Reg. No: {{ $org->registration_no }}
+                    @endif
+                @endif
+            </div>
+        </div>
+
+        <div class="logo-section"></div>
+
+    </div>
+
+    {{-- Receipt Details --}}
+    <div class="receipt-box">
+
+        <div class="receipt-title">
+            Official Receipt
+        </div>
+
+        <table class="receipt-details">
+
+            <tr>
+                <td class="label">Receipt No:</td>
+                <td class="value">{{ $receipt->receipt_no }}</td>
+            </tr>
+
+            <tr>
+                <td class="label">Receipt Date:</td>
+                <td class="value">
+                    {{ $receipt->created_at ? $receipt->created_at->format('F j, Y') : '' }}
+                </td>
+            </tr>
+
+            @if($receipt->receiptType)
+                <tr>
+                    <td class="label">Receipt Type:</td>
+                    <td class="value">{{ $receipt->receiptType->name }}</td>
+                </tr>
+            @endif
+
+            <tr>
+                <td class="label">Received From:</td>
+                <td class="value">{{ $receipt->received_from }}</td>
+            </tr>
+
+            @if($receipt->address1 || $receipt->address2 || $receipt->city || $receipt->state || $receipt->zip)
+                <tr>
+                    <td class="label">Address:</td>
+                    <td class="value">
+                        @if($receipt->address1)
+                            {{ $receipt->address1 }}<br>
+                        @endif
+
+                        @if($receipt->address2)
+                            {{ $receipt->address2 }}<br>
+                        @endif
+
+                        @if($receipt->city || $receipt->state || $receipt->zip)
+                            {{ $receipt->city }}
+                            @if($receipt->city && $receipt->state), @endif
+                            {{ $receipt->state }} {{ $receipt->zip }}
+                        @endif
+
+                        @if($receipt->county)
+                            <br>County: {{ $receipt->county }}
+                        @endif
+                    </td>
+                </tr>
+            @endif
+
+            <tr>
+                <td class="label">Payment Mode:</td>
+                <td class="value">
+                    {{ str_replace('_', ' ', $receipt->payment_mode) }}
+                </td>
+            </tr>
+
+            @if($receipt->payment_mode === 'CHECK')
+                @if($receipt->bank_name)
+                    <tr>
+                        <td class="label">Bank Name:</td>
+                        <td class="value">{{ $receipt->bank_name }}</td>
+                    </tr>
+                @endif
+
+                @if($receipt->check_number)
+                    <tr>
+                        <td class="label">Check Number:</td>
+                        <td class="value">{{ $receipt->check_number }}</td>
+                    </tr>
+                @endif
+
+                @if($receipt->check_date)
+                    <tr>
+                        <td class="label">Check Date:</td>
+                        <td class="value">{{ $receipt->check_date->format('F j, Y') }}</td>
+                    </tr>
+                @endif
+            @endif
+
+            @if($receipt->donor_name)
+                <tr>
+                    <td class="label">Donor Name:</td>
+                    <td class="value">{{ $receipt->donor_name }}</td>
+                </tr>
+            @endif
+
+            <tr class="amount-row">
+                <td class="label">Amount Received:</td>
+                <td class="value">${{ number_format((float) $receipt->amount, 2) }}</td>
+            </tr>
+
+        </table>
+
+        @if($receipt->remarks)
+            <div class="remarks-box">
+                <div class="remarks-title">Remarks:</div>
+                <div>{{ $receipt->remarks }}</div>
+            </div>
+        @endif
+
+    </div>
+
+    {{-- Footer --}}
+    <div class="footer">
+    <p>
+        This is a computer-generated receipt.
+        @if($org && !empty($org->name))
+            {{ $org->name }}
+        @endif
+        @if($org && !empty($org->website))
+            | {{ $org->website }}
+        @endif
+    </p>
+</div>
+
+</div>
+
+<script>
+    window.onload = function () {
+        window.print();
+    };
+</script>
+
 </body>
 </html>

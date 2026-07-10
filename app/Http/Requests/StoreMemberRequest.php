@@ -40,7 +40,11 @@ class StoreMemberRequest extends FormRequest
             'status_reason' => 'nullable|string|max:45',
             'notes' => 'nullable|string',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'receipt_no' => 'nullable|string|max:30',
+            'receipt_no' => 'required|regex:/^\d{6}$/|unique:receipts,receipt_no',
+            'payment_mode' => 'required|in:CASH,CHECK,CREDIT_CARD',
+            'bank_name' => 'nullable|string|max:255',
+            'check_number' => 'nullable|string|max:255',
+            'check_date' => 'nullable|date',
         ];
     }
 
@@ -53,6 +57,8 @@ class StoreMemberRequest extends FormRequest
             'last_name.required' => 'Last name is required.',
             'membership_type_id.required' => 'Membership type is required.',
             'membership_type_id.exists' => 'Selected membership type is invalid.',
+            'receipt_no.regex' => 'Receipt number must be 6 digits only, for example 005001.',
+            'receipt_no.unique' => 'This receipt number already exists.',
         ];
     }
 }
