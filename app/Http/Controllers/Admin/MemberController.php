@@ -27,15 +27,27 @@ class MemberController extends Controller
 
     public function ajax(Request $request)
     {
+        //$searchColumn = $request->get('search_column', 'all');
+        //$searchValue  = trim($request->get('search_value', ''));
+
+        //$start  = (int) $request->get('start', 0);
+        //$length = (int) $request->get('length', 10);
+
+        // Safety limit
+        //if ($length <= 0 || $length > 100) {
+            //$length = 10;
+        //}
+
         $searchColumn = $request->get('search_column', 'all');
         $searchValue  = trim($request->get('search_value', ''));
 
-        $start  = (int) $request->get('start', 0);
-        $length = (int) $request->get('length', 10);
+        $start  = max((int) $request->get('start', 0), 0);
+        $length = (int) $request->get('length', 50);
 
-        // Safety limit
-        if ($length <= 0 || $length > 100) {
-            $length = 10;
+        $allowedLengths = [25, 50, 100, 250, 500, 1000];
+
+        if (!in_array($length, $allowedLengths, true)) {
+            $length = 50;
         }
 
         /*
