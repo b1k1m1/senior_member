@@ -1,354 +1,582 @@
 @extends('admin.admin_dashboard')
 
+
+
 @section('title', 'Add Member')
+
 @section('page-title', 'Add Member')
 
+
+
 @section('content')
-<div class="card">
-    <div class="card-body">
-        <form action="{{ route('admin.members.store') }}" method="POST" enctype="multipart/form-data" id="member-form">
-            @csrf
 
-            <ul class="nav nav-tabs" id="memberTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button">
-                        <i class="fas fa-user me-1"></i> Personal
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="membership-tab" data-bs-toggle="tab" data-bs-target="#membership" type="button">
-                        <i class="fas fa-id-card me-1"></i> Membership
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button">
-                        <i class="fas fa-address-book me-1"></i> Contact
-                    </button>
-                </li>
-            </ul>
+    <div class="card">
 
-            <div class="tab-content p-3" id="memberTabsContent">
-                <div class="tab-pane fade show active" id="personal" role="tabpanel">
-                {{-- Primary Member Information --}}
-                <div class="card border mb-4">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0">
-                            <i class="fas fa-user me-1"></i> Primary Member Information
-                        </h6>
-                    </div>
+        <div class="card-body">
 
-                    <div class="card-body">
-                        <div class="row">
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Member No *</label>
-                                <input type="text"
-                                    name="member_no"
-                                    class="form-control"
-                                    data-uppercase
-                                    required
-                                    value="{{ old('member_no', $nextMemberNo ?? '') }}">
-
-                                <small class="text-muted">
-                                    Suggested next member number. You can change it before saving.
-                                </small>
-
-                                @error('member_no')
-                                    <div class="text-danger">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Photo</label>
-                                <input type="file" name="photo" class="form-control" accept="image/*">
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">First Name *</label>
-                                <input type="text"
-                                    name="first_name"
-                                    class="form-control"
-                                    data-uppercase
-                                    required
-                                    value="{{ old('first_name') }}">
-
-                                @error('first_name')
-                                    <div class="text-danger">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Last Name *</label>
-                                <input type="text"
-                                    name="last_name"
-                                    class="form-control"
-                                    data-uppercase
-                                    required
-                                    value="{{ old('last_name') }}">
-
-                                @error('last_name')
-                                    <div class="text-danger">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Date of Birth</label>
-                                <input type="date"
-                                    name="dateofbirth"
-                                    class="form-control"
-                                    value="{{ old('dateofbirth') }}">
-                            </div>
-
-                        </div>
-                    </div>
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <strong>Member was not saved. Please check the following:</strong>
+                    <ul class="mb-0 mt-2">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
                 </div>
+            @endif
 
-
-                {{-- Spouse Member Information --}}
-                <div class="card border mb-4">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0">
-                            <i class="fas fa-user-friends me-1"></i> Spouse Member Information
-                        </h6>
-                    </div>
-
-                    <div class="card-body">
-                        <div class="row">
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Spouse Member No</label>
-                                <input type="text"
-                                    name="spouse_member_no"
-                                    class="form-control"
-                                    data-uppercase
-                                    value="{{ old('spouse_member_no', $nextSpouseMemberNo ?? '') }}">
-
-                                <small class="text-muted">
-                                    Used only if spouse name is entered. You can change this number before saving.
-                                </small>
-
-                                @error('spouse_member_no')
-                                    <div class="text-danger">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Spouse Date of Birth</label>
-                                <input type="date"
-                                    name="spouse_dateofbirth"
-                                    class="form-control"
-                                    value="{{ old('spouse_dateofbirth') }}">
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Spouse First Name</label>
-                                <input type="text"
-                                    name="spouse_first_name"
-                                    class="form-control"
-                                    data-uppercase
-                                    value="{{ old('spouse_first_name') }}">
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Spouse Last Name</label>
-                                <input type="text"
-                                    name="spouse_last_name"
-                                    class="form-control"
-                                    data-uppercase
-                                    value="{{ old('spouse_last_name') }}">
-                            </div>
-
-                        </div>
-                    </div>
+            @if (session('error'))
+                <div class="alert alert-danger">
+                    {{ session('error') }}
                 </div>
+            @endif
+
+            <form action="{{ route('admin.members.store') }}" method="POST" enctype="multipart/form-data" id="member-form">
+
+                @csrf
 
 
-                    {{-- Notes --}}
-                    <div class="card border">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0">
-                                <i class="fas fa-sticky-note me-1"></i> Notes
-                            </h6>
+
+                <ul class="nav nav-tabs" id="memberTabs" role="tablist">
+
+                    <li class="nav-item" role="presentation">
+
+                        <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal"
+                            type="button">
+
+                            <i class="fas fa-user me-1"></i> Personal
+
+                        </button>
+
+                    </li>
+
+                    <li class="nav-item" role="presentation">
+
+                        <button class="nav-link" id="membership-tab" data-bs-toggle="tab" data-bs-target="#membership"
+                            type="button">
+
+                            <i class="fas fa-id-card me-1"></i> Membership
+
+                        </button>
+
+                    </li>
+
+                    <li class="nav-item" role="presentation">
+
+                        <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact"
+                            type="button">
+
+                            <i class="fas fa-address-book me-1"></i> Contact
+
+                        </button>
+
+                    </li>
+
+                </ul>
+
+
+
+                <div class="tab-content p-3" id="memberTabsContent">
+
+                    <div class="tab-pane fade show active" id="personal" role="tabpanel">
+
+                        {{-- Primary Member Information --}}
+
+                        <div class="card border mb-4">
+
+                            <div class="card-header bg-light">
+
+                                <h6 class="mb-0">
+
+                                    <i class="fas fa-user me-1"></i> Primary Member Information
+
+                                </h6>
+
+                            </div>
+
+
+
+                            <div class="card-body">
+
+                                <div class="row">
+
+
+
+                                    <div class="col-md-6 mb-3">
+
+                                        <label class="form-label">Member No *</label>
+
+                                        <input type="text" name="member_no" class="form-control" data-uppercase required
+                                            value="{{ old('member_no', $nextMemberNo ?? '') }}">
+
+
+
+                                        <small class="text-muted">
+
+                                            Suggested next member number. You can change it before saving.
+
+                                        </small>
+
+
+
+                                        @error('member_no')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+
+                                    </div>
+
+
+
+                                    <div class="col-md-6 mb-3">
+
+                                        <label class="form-label">Photo</label>
+
+                                        <input type="file" name="photo" class="form-control" accept="image/*">
+
+                                    </div>
+
+
+
+                                    <div class="col-md-6 mb-3">
+
+                                        <label class="form-label">First Name *</label>
+
+                                        <input type="text" name="first_name" class="form-control" data-uppercase required
+                                            value="{{ old('first_name') }}">
+
+
+
+                                        @error('first_name')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+
+                                    </div>
+
+
+
+                                    <div class="col-md-6 mb-3">
+
+                                        <label class="form-label">Last Name *</label>
+
+                                        <input type="text" name="last_name" class="form-control" data-uppercase required
+                                            value="{{ old('last_name') }}">
+
+
+
+                                        @error('last_name')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+
+                                    </div>
+
+
+
+                                    <div class="col-md-6 mb-3">
+
+                                        <label class="form-label">Date of Birth</label>
+
+                                        <input type="date" name="dateofbirth" class="form-control"
+                                            value="{{ old('dateofbirth') }}">
+
+                                    </div>
+
+
+
+                                </div>
+
+                            </div>
+
                         </div>
 
-                        <div class="card-body">
-                            <textarea name="notes"
-                                    class="form-control"
-                                    rows="3">{{ old('notes') }}</textarea>
-                        </div>
-                    </div>
 
-            </div>
 
-                <div class="tab-pane fade" id="membership" role="tabpanel">
-                    <div class="row">
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Membership Type *</label>
-                            <select name="membership_type_id" class="form-select" required>
-                                <option value="">Select Type</option>
-                                @foreach($membershipTypes as $type)
-                                    <option value="{{ $type->id }}" {{ old('membership_type_id') == $type->id ? 'selected' : '' }}>
-                                        {{ $type->name }} (${{ number_format($type->fee_amount, 2) }})
-                                    </option>
-                                @endforeach
-                            </select>
 
-                            @error('membership_type_id')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
+                        {{-- Spouse Membership Selection --}}
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_spouse" id="has_spouse"
+                                    value="1" {{ old('has_spouse') ? 'checked' : '' }}>
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Receipt No</label>
-                            <input type="text"
-                                name="receipt_no"
-                                id="receipt_no"
-                                class="form-control"
-                                value="{{ old('receipt_no', $nextReceiptNo ?? '') }}"
-                                maxlength="6">
+                                <label class="form-check-label fw-semibold" for="has_spouse">
+                                    Add Spouse as Member
+                                </label>
+                            </div>
 
                             <small class="text-muted">
-                                Suggested next receipt number from receipt table. You can change it before saving.
+                                Check this box only when this membership includes a spouse.
                             </small>
-
-                            @error('receipt_no')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
                         </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Status *</label>
-                            <select name="status" class="form-select" required id="status-select">
-                                <option value="ACTIVE" {{ old('status') == 'ACTIVE' ? 'selected' : '' }}>Active</option>
-                                <option value="INACTIVE" {{ old('status') == 'INACTIVE' ? 'selected' : '' }}>Inactive</option>
-                            </select>
+                        {{-- Spouse Member Information --}}
+                        <div class="card border mb-4" id="spouse-member-card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-user-friends me-1"></i> Spouse Member Information
+                                </h6>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="row">
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Spouse Member No</label>
+                                        <input type="text" name="spouse_member_no" class="form-control spouse-field"
+                                            data-uppercase
+                                            value="{{ old('spouse_member_no', $nextSpouseMemberNo ?? '') }}">
+
+                                        <small class="text-muted">
+                                            Used only when Add Spouse as Member is checked.
+                                        </small>
+
+                                        @error('spouse_member_no')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Spouse Date of Birth</label>
+                                        <input type="date" name="spouse_dateofbirth" class="form-control spouse-field"
+                                            value="{{ old('spouse_dateofbirth') }}">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            Spouse First Name
+                                            <span id="spouse-required-mark" class="text-danger"
+                                                style="display:none;">*</span>
+                                        </label>
+                                        <input type="text" name="spouse_first_name" id="spouse_first_name"
+                                            class="form-control spouse-field" data-uppercase
+                                            value="{{ old('spouse_first_name') }}">
+
+                                        @error('spouse_first_name')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Spouse Last Name</label>
+                                        <input type="text" name="spouse_last_name" class="form-control spouse-field"
+                                            data-uppercase value="{{ old('spouse_last_name') }}">
+                                    </div>
+
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="col-md-6 mb-3" id="status-reason-div" style="display: none;">
-                            <label class="form-label">Status Reason</label>
-                            <select name="status_reason" class="form-select">
-                                <option value="">Select Reason</option>
-                                <option value="Out Of Town" {{ old('status_reason') == 'Out Of Town' ? 'selected' : '' }}>Out Of Town</option>
-                                <option value="Passed Away" {{ old('status_reason') == 'Passed Away' ? 'selected' : '' }}>Passed Away</option>
-                                <option value="Cancelled" {{ old('status_reason') == 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
-                            </select>
+
+
+
+
+
+
+
+                        {{-- Notes --}}
+
+                        <div class="card border">
+
+                            <div class="card-header bg-light">
+
+                                <h6 class="mb-0">
+
+                                    <i class="fas fa-sticky-note me-1"></i> Notes
+
+                                </h6>
+
+                            </div>
+
+
+
+                            <div class="card-body">
+
+                                <textarea name="notes" class="form-control" rows="3">{{ old('notes') }}</textarea>
+
+                            </div>
+
                         </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Membership Start Date</label>
-                            <input type="date"
-                                name="membership_start_date"
-                                class="form-control"
-                                value="{{ old('membership_start_date') }}">
-                        </div>
 
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Payment Mode *</label>
-                            <select name="payment_mode"
-                                    id="payment_mode"
-                                    class="form-select"
-                                    required>
-                                <option value="CASH" {{ old('payment_mode', 'CASH') == 'CASH' ? 'selected' : '' }}>Cash</option>
-                                <option value="CHECK" {{ old('payment_mode') == 'CHECK' ? 'selected' : '' }}>Check</option>
-                                <option value="CREDIT_CARD" {{ old('payment_mode') == 'CREDIT_CARD' ? 'selected' : '' }}>Credit Card</option>
-                            </select>
 
-                            @error('payment_mode')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
+                    </div>
 
-                        <div class="col-md-4 mb-3 check-fields">
-                            <label class="form-label">Bank Name</label>
-                            <input type="text"
-                                name="bank_name"
-                                class="form-control"
-                                value="{{ old('bank_name') }}"
-                                maxlength="255">
 
-                            @error('bank_name')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
 
-                        <div class="col-md-4 mb-3 check-fields">
-                            <label class="form-label">Check Number</label>
-                            <input type="text"
-                                name="check_number"
-                                class="form-control"
-                                value="{{ old('check_number') }}"
-                                maxlength="255">
+                    <div class="tab-pane fade" id="membership" role="tabpanel">
 
-                            @error('check_number')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
+                        <div class="row">
 
-                        <div class="col-md-4 mb-3 check-fields">
-                            <label class="form-label">Check Date</label>
-                            <input type="date"
-                                name="check_date"
-                                class="form-control"
-                                value="{{ old('check_date') }}">
 
-                            @error('check_date')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">Membership Type *</label>
+
+                                <select name="membership_type_id" class="form-select" required>
+
+                                    <option value="">Select Type</option>
+
+                                    @foreach ($membershipTypes as $type)
+                                        <option value="{{ $type->id }}"
+                                            {{ old('membership_type_id') == $type->id ? 'selected' : '' }}>
+
+                                            {{ $type->name }} (${{ number_format($type->fee_amount, 2) }})
+
+                                        </option>
+                                    @endforeach
+
+                                </select>
+
+
+
+                                @error('membership_type_id')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+
+                            </div>
+
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">Receipt No</label>
+
+                                <input type="text" name="receipt_no" id="receipt_no" class="form-control"
+                                    value="{{ old('receipt_no', $nextReceiptNo ?? '') }}" maxlength="6">
+
+
+
+                                <small class="text-muted">
+
+                                    Suggested next receipt number from receipt table. You can change it before saving.
+
+                                </small>
+
+
+
+                                @error('receipt_no')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+
+                            </div>
+
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">Status *</label>
+
+                                <select name="status" class="form-select" required id="status-select">
+
+                                    <option value="ACTIVE" {{ old('status') == 'ACTIVE' ? 'selected' : '' }}>Active
+                                    </option>
+
+                                    <option value="INACTIVE" {{ old('status') == 'INACTIVE' ? 'selected' : '' }}>Inactive
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+
+                            <div class="col-md-6 mb-3" id="status-reason-div" style="display: none;">
+
+                                <label class="form-label">Status Reason</label>
+
+                                <select name="status_reason" class="form-select">
+
+                                    <option value="">Select Reason</option>
+
+                                    <option value="Out Of Town"
+                                        {{ old('status_reason') == 'Out Of Town' ? 'selected' : '' }}>Out Of Town</option>
+
+                                    <option value="Passed Away"
+                                        {{ old('status_reason') == 'Passed Away' ? 'selected' : '' }}>Passed Away</option>
+
+                                    <option value="Cancelled" {{ old('status_reason') == 'Cancelled' ? 'selected' : '' }}>
+                                        Cancelled</option>
+
+                                </select>
+
+                            </div>
+
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">Membership Start Date</label>
+
+                                <input type="date" name="membership_start_date" class="form-control"
+                                    value="{{ old('membership_start_date') }}">
+
+                            </div>
+
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">Payment Mode *</label>
+
+                                <select name="payment_mode" id="payment_mode" class="form-select" required>
+
+                                    <option value="CASH" {{ old('payment_mode', 'CASH') == 'CASH' ? 'selected' : '' }}>
+                                        Cash</option>
+
+                                    <option value="CHECK" {{ old('payment_mode') == 'CHECK' ? 'selected' : '' }}>Check
+                                    </option>
+
+                                    <option value="CREDIT_CARD"
+                                        {{ old('payment_mode') == 'CREDIT_CARD' ? 'selected' : '' }}>Credit Card</option>
+
+                                </select>
+
+
+
+                                @error('payment_mode')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+
+                            </div>
+
+
+
+                            <div class="col-md-4 mb-3 check-fields">
+
+                                <label class="form-label">Bank Name</label>
+
+                                <input type="text" name="bank_name" class="form-control"
+                                    value="{{ old('bank_name') }}" maxlength="255">
+
+
+
+                                @error('bank_name')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+
+                            </div>
+
+
+
+                            <div class="col-md-4 mb-3 check-fields">
+
+                                <label class="form-label">Check Number</label>
+
+                                <input type="text" name="check_number" class="form-control"
+                                    value="{{ old('check_number') }}" maxlength="255">
+
+
+
+                                @error('check_number')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+
+                            </div>
+
+
+
+                            <div class="col-md-4 mb-3 check-fields">
+
+                                <label class="form-label">Check Date</label>
+
+                                <input type="date" name="check_date" class="form-control"
+                                    value="{{ old('check_date') }}">
+
+
+
+                                @error('check_date')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+
+                            </div>
+
+
+
                         </div>
 
                     </div>
-                </div>
+
+
 
                 </div>
+
                 <div class="tab-pane fade" id="contact" role="tabpanel">
 
+
+
                     {{-- Primary Contact Information --}}
+
                     <div class="card border mb-4">
+
                         <div class="card-header bg-light">
+
                             <h6 class="mb-0">
+
                                 <i class="fas fa-address-card me-1"></i> Primary Contact Information
+
                             </h6>
+
                         </div>
 
+
+
                         <div class="card-body">
+
                             <div class="row">
 
+
+
                                 <div class="col-md-6 mb-3">
+
                                     <label class="form-label">Email</label>
-                                    <input type="email"
-                                        name="email"
-                                        class="form-control"
+
+                                    <input type="email" name="email" class="form-control"
                                         value="{{ old('email') }}">
+
+
 
                                     @error('email')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
+
                                 </div>
 
+
+
                                 <div class="col-md-6 mb-3">
+
                                     <label class="form-label">Phone</label>
-                                    <input type="text"
-                                        name="phone"
-                                        class="form-control"
+
+                                    <input type="text" name="phone" class="form-control"
                                         value="{{ old('phone') }}">
+
                                 </div>
 
+
+
                                 <div class="col-md-6 mb-3">
+
                                     <label class="form-label">Cell Phone</label>
-                                    <input type="text"
-                                        name="cell_phone"
-                                        class="form-control"
+
+                                    <input type="text" name="cell_phone" class="form-control"
                                         value="{{ old('cell_phone') }}">
+
                                 </div>
+
+
 
                             </div>
+
                         </div>
+
                     </div>
 
 
+
+
+
                     {{-- Spouse Contact Information --}}
-                    <div class="card border mb-4">
+                    <div class="card border mb-4" id="spouse-contact-card">
                         <div class="card-header bg-light">
                             <h6 class="mb-0">
                                 <i class="fas fa-user-friends me-1"></i> Spouse Contact Information
@@ -360,9 +588,7 @@
 
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Spouse Email</label>
-                                    <input type="email"
-                                        name="spouse_email"
-                                        class="form-control"
+                                    <input type="email" name="spouse_email" class="form-control spouse-field"
                                         value="{{ old('spouse_email') }}">
 
                                     @error('spouse_email')
@@ -372,9 +598,7 @@
 
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Spouse Cell Phone</label>
-                                    <input type="text"
-                                        name="spouse_cell_phone"
-                                        class="form-control"
+                                    <input type="text" name="spouse_cell_phone" class="form-control spouse-field"
                                         value="{{ old('spouse_cell_phone') }}">
                                 </div>
 
@@ -383,165 +607,326 @@
                     </div>
 
 
+
+
+
+
+
+
                     {{-- Shared Address Information --}}
+
                     <div class="card border">
+
                         <div class="card-header bg-light">
+
                             <h6 class="mb-0">
+
                                 <i class="fas fa-home me-1"></i> Shared Address Information
+
                             </h6>
+
                         </div>
+
+
 
                         <div class="card-body">
+
                             <div class="row">
 
+
+
                                 <div class="col-md-6 mb-3">
+
                                     <label class="form-label">Address 1</label>
-                                    <input type="text"
-                                        name="address1"
-                                        class="form-control"
+
+                                    <input type="text" name="address1" class="form-control"
                                         value="{{ old('address1') }}">
+
                                 </div>
 
+
+
                                 <div class="col-md-6 mb-3">
+
                                     <label class="form-label">Address 2</label>
-                                    <input type="text"
-                                        name="address2"
-                                        class="form-control"
+
+                                    <input type="text" name="address2" class="form-control"
                                         value="{{ old('address2') }}">
+
                                 </div>
+
+
 
                                 <div class="col-md-6 mb-3">
+
                                     <label class="form-label">City</label>
-                                    <input type="text"
-                                        name="city"
-                                        class="form-control"
+
+                                    <input type="text" name="city" class="form-control"
                                         value="{{ old('city') }}">
+
                                 </div>
 
+
+
                                 <div class="col-md-2 mb-3">
+
                                     <label class="form-label">State</label>
-                                    <input type="text"
-                                        name="state"
-                                        class="form-control"
+
+                                    <input type="text" name="state" class="form-control"
                                         value="{{ old('state') }}">
+
                                 </div>
 
+
+
                                 <div class="col-md-2 mb-3">
+
                                     <label class="form-label">Zip</label>
-                                    <input type="text"
-                                        name="zip"
-                                        class="form-control"
+
+                                    <input type="text" name="zip" class="form-control"
                                         value="{{ old('zip') }}">
+
                                 </div>
 
+
+
                                 <div class="col-md-2 mb-3">
+
                                     <label class="form-label">County</label>
-                                    <input type="text"
-                                        name="county"
-                                        class="form-control"
+
+                                    <input type="text" name="county" class="form-control"
                                         value="{{ old('county') }}">
+
                                 </div>
+
+
 
                             </div>
+
                         </div>
+
                     </div>
+
+
 
                 </div>
 
-            </div>
 
-            <div class="d-flex justify-content-end gap-2">
-                <a href="{{ route('admin.members.index') }}" class="btn btn-secondary">Cancel</a>
-                <button type="submit" class="btn btn-primary">Save Member</button>
-            </div>
+
+        </div>
+
+
+
+        <div class="d-flex justify-content-end gap-2">
+
+            <a href="{{ route('admin.members.index') }}" class="btn btn-secondary">Cancel</a>
+
+            <button type="submit" class="btn btn-primary">Save Member</button>
+
+        </div>
+
         </form>
+
     </div>
-</div>
+
+    </div>
+
 @endsection
+
 <style>
     #memberTabsContent .card-header h6 {
+
         font-weight: 600;
+
         color: #1f3b64;
+
     }
+
+
 
     #memberTabsContent .card {
+
         box-shadow: none;
+
         border-color: #d9e2ef !important;
+
     }
+
+
 
     #memberTabsContent .card-header {
+
         padding: 0.65rem 1rem;
+
         border-bottom: 1px solid #d9e2ef;
+
     }
 
+
+
     #memberTabsContent .card-body {
+
         padding-bottom: 0.5rem;
+
+    }
+
+    .spouse-card-disabled {
+        opacity: 0.55;
     }
 </style>
 
+
+
 @section('scripts')
-<script>
-$(document).ready(function() {
 
-    function toggleStatusReason() {
-        var status = $('#status-select').val();
+    <script>
+        $(document).ready(function() {
 
-        if (status === 'INACTIVE') {
-            $('#status-reason-div').show();
-        } else {
-            $('#status-reason-div').hide();
-            $('#status-reason-div select').val('');
-        }
-    }
+            /*
+            |--------------------------------------------------------------------------
+            | Enable / Disable spouse fields
+            |--------------------------------------------------------------------------
+            */
+            function toggleSpouseFields() {
+                var hasSpouse = $('#has_spouse').is(':checked');
 
-    $('#status-select').change(toggleStatusReason);
-    toggleStatusReason();
+                $('.spouse-field').prop('disabled', !hasSpouse);
+                $('#spouse_first_name').prop('required', hasSpouse);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Show check fields only when payment mode is CHECK
-    |--------------------------------------------------------------------------
-    */
-    function toggleCheckFields() {
-        var paymentMode = $('#payment_mode').val();
+                if (hasSpouse) {
+                    $('#spouse-member-card, #spouse-contact-card').removeClass('spouse-card-disabled');
+                    $('#spouse-required-mark').show();
+                } else {
+                    $('#spouse-member-card, #spouse-contact-card').addClass('spouse-card-disabled');
+                    $('#spouse-required-mark').hide();
+                }
+            }
 
-        if (paymentMode === 'CHECK') {
-            $('.check-fields').show();
-        } else {
-            $('.check-fields').hide();
+            $('#has_spouse').on('change', toggleSpouseFields);
+            toggleSpouseFields();
 
-            $('input[name="bank_name"]').val('');
-            $('input[name="check_number"]').val('');
-            $('input[name="check_date"]').val('');
-        }
-    }
 
-    $('#payment_mode').on('change', toggleCheckFields);
-    toggleCheckFields();
 
-    /*
-    |--------------------------------------------------------------------------
-    | Receipt No: numeric only, 6 digits
-    |--------------------------------------------------------------------------
-    */
-    $('#receipt_no').on('input', function () {
-        let value = $(this).val().replace(/\D/g, '');
 
-        if (value.length > 6) {
-            value = value.substring(0, 6);
-        }
+            function toggleStatusReason() {
 
-        $(this).val(value);
-    });
+                var status = $('#status-select').val();
 
-    $('#receipt_no').on('blur', function () {
-        let value = $(this).val().replace(/\D/g, '');
 
-        if (value !== '') {
-            $(this).val(value.padStart(6, '0'));
-        }
-    });
 
-});
-</script>
+                if (status === 'INACTIVE') {
+
+                    $('#status-reason-div').show();
+
+                } else {
+
+                    $('#status-reason-div').hide();
+
+                    $('#status-reason-div select').val('');
+
+                }
+
+            }
+
+
+
+            $('#status-select').change(toggleStatusReason);
+
+            toggleStatusReason();
+
+
+
+            /*
+
+            |--------------------------------------------------------------------------
+
+            | Show check fields only when payment mode is CHECK
+
+            |--------------------------------------------------------------------------
+
+            */
+
+            function toggleCheckFields() {
+
+                var paymentMode = $('#payment_mode').val();
+
+
+
+                if (paymentMode === 'CHECK') {
+
+                    $('.check-fields').show();
+
+                } else {
+
+                    $('.check-fields').hide();
+
+
+
+                    $('input[name="bank_name"]').val('');
+
+                    $('input[name="check_number"]').val('');
+
+                    $('input[name="check_date"]').val('');
+
+                }
+
+            }
+
+
+
+            $('#payment_mode').on('change', toggleCheckFields);
+
+            toggleCheckFields();
+
+
+
+            /*
+
+            |--------------------------------------------------------------------------
+
+            | Receipt No: numeric only, 6 digits
+
+            |--------------------------------------------------------------------------
+
+            */
+
+            $('#receipt_no').on('input', function() {
+
+                let value = $(this).val().replace(/\D/g, '');
+
+
+
+                if (value.length > 6) {
+
+                    value = value.substring(0, 6);
+
+                }
+
+
+
+                $(this).val(value);
+
+            });
+
+
+
+            $('#receipt_no').on('blur', function() {
+
+                let value = $(this).val().replace(/\D/g, '');
+
+
+
+                if (value !== '') {
+
+                    $(this).val(value.padStart(6, '0'));
+
+                }
+
+            });
+
+
+
+        });
+    </script>
+
 @endsection
