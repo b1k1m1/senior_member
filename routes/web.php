@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\DocumentController;
 use App\Http\Controllers\Admin\OfficeBearerController;
 use App\Http\Controllers\Admin\OrganizationController;
 use App\Http\Controllers\Admin\ReceiptController;
+use App\Http\Controllers\EventSeatingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -41,13 +42,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['perm:members.menu'])->group(function () {
 
         Route::get('members/import/excel', [MemberController::class, 'importForm'])
-        ->name('admin.members.import.form');
+            ->name('admin.members.import.form');
 
         Route::post('members/import/excel/preview', [MemberController::class, 'importPreview'])
-        ->name('admin.members.import.preview');
+            ->name('admin.members.import.preview');
 
         Route::post('members/import/excel/confirm', [MemberController::class, 'importConfirm'])
-        ->name('admin.members.import.confirm');
+            ->name('admin.members.import.confirm');
 
         Route::resource('members', MemberController::class)->names('admin.members');
     });
@@ -96,10 +97,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Event Attendees
         Route::get('events/{event}/attendees/ajax', [EventAttendeeController::class, 'ajax'])->name('admin.event-attendees.ajax');
         Route::get('events/{event}/attendees', [EventAttendeeController::class, 'index'])->name('admin.event-attendees.index');
+        Route::get('events/{event}/attendees/member/{member}/spouse', [EventAttendeeController::class, 'findSpouse'])->name('admin.event-attendees.find-spouse');
         Route::get('events/{event}/attendees/create', [EventAttendeeController::class, 'create'])->name('admin.event-attendees.create');
+        Route::get('events/{event}/attendees/{attendee}/edit', [EventAttendeeController::class, 'edit'])->name('admin.event-attendees.edit');
+        Route::put('events/{event}/attendees/{attendee}', [EventAttendeeController::class, 'update'])->name('admin.event-attendees.update');
         Route::post('events/{event}/attendees', [EventAttendeeController::class, 'store'])->name('admin.event-attendees.store');
         Route::delete('events/{event}/attendees/{attendee}', [EventAttendeeController::class, 'destroy'])->name('admin.event-attendees.destroy');
         Route::put('events/{event}/attendees/{attendee}/status', [EventAttendeeController::class, 'updateStatus'])->name('admin.event-attendees.update-status');
+        Route::get('events/{event}/attendees/{attendee}/guests', [EventAttendeeController::class, 'guests'])->name('admin.event-attendees.guests');
+        Route::post('events/{event}/attendees/{attendee}/guests', [EventAttendeeController::class, 'storeGuests'])->name('admin.event-attendees.guests.store');
 
         // Documents (Receipts & Welcome Letters)
         Route::get('payments/{payment}/receipt', [DocumentController::class, 'generateReceipt'])->name('admin.payments.receipt');
@@ -140,4 +146,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
-require __DIR__.'/auth.php';
+Route::prefix('events/{eventId}/seating')->group(function () {
+
+    // Seating setup / overview
+    Route::get('/', [EventSeatingController::class, 'index'])->name('events.seating.index');
+
+    Route::get('/hall', [EventSeatingController::class, 'hall'])->name('events.seating.hall');
+    Route::post('/hall/save-positions', [EventSeatingController::class, 'saveHallPositions'])->name('events.seating.hall.save');
+    // Generate tables + seats
+    Route::post('/generate', [EventSeatingController::class, 'generate'])->name('events.seating.generate');
+    // View one table and its seats
+    Route::get('/table/{tableId}', [EventSeatingController::class, 'showTable'])->name('events.seating.table');
+    // Assign member to seat
+    Route::post('/seat/{seatId}/assign-member', [EventSeatingController::class, 'assignMember'])->name('events.seating.assign.member');
+    // Assign guest to seat
+    Route::post('/seat/{seatId}/assign-guest', [EventSeatingController::class, 'assignGuest'])->name('events.seating.assign.guest');
+    // Remove current assignment from seat
+    Route::post('/seat/{seatId}/clear', [EventSeatingController::class, 'clearSeat'])->name('events.seating.clear');
+});
+
+
+require __DIR__ . '/auth.php';

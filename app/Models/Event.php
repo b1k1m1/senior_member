@@ -19,6 +19,7 @@ class Event extends Model
         'location',
         'capacity',
         'price',
+        'spouse_charge_mode',
         'status',
         'confirmation_deadline',
         'min_attendees',
@@ -100,7 +101,7 @@ class Event extends Model
     public function scopeOngoing($query)
     {
         return $query->where('start_date', '<=', now()->toDateString())
-                    ->where('end_date', '>=', now()->toDateString());
+            ->where('end_date', '>=', now()->toDateString());
     }
 
     public function scopePast($query)

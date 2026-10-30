@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class EventController extends Controller
 {
@@ -23,10 +24,10 @@ class EventController extends Controller
             $orderColumnIndex = $request->order[0]['column'];
             $orderDir = $request->order[0]['dir'] ?? 'asc';
             $orderColumn = $columns[$orderColumnIndex] ?? 'start_date';
-            
+
             if ($orderColumn === 'event_type_id') {
                 $query->join('event_types', 'events.event_type_id', '=', 'event_types.id')
-                      ->orderBy('event_types.name', $orderDir);
+                    ->orderBy('event_types.name', $orderDir);
             } else {
                 $query->orderBy($orderColumn, $orderDir);
             }
@@ -36,10 +37,10 @@ class EventController extends Controller
 
         $start = $request->start ?? 0;
         $length = $request->length ?? 10;
-        
+
         $totalRecords = Event::count();
         $filteredRecords = $query->count();
-        
+
         $events = $query->skip($start)->take($length)->get();
 
         $data = $events->map(function ($event) {
@@ -83,6 +84,15 @@ class EventController extends Controller
             'location' => 'nullable|string|max:255',
             'capacity' => 'nullable|integer|min:0',
             'price' => 'required|numeric|min:0',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Spouse Charge Mode
+            |--------------------------------------------------------------------------
+            */
+
+            'spouse_charge_mode' => 'required|in:SEPARATE,COMBINED',
+
             'status' => 'required|in:ACTIVE,SCHEDULED,RESCHEDULED,CANCELLED,COMPLETED',
             'confirmation_deadline' => 'nullable|date',
             'min_attendees' => 'nullable|integer|min:0',
@@ -92,12 +102,14 @@ class EventController extends Controller
         ]);
 
         $data = $request->all();
-        $data['created_by'] = auth()->id();
-        $data['updated_by'] = auth()->id();
+
+        $data['created_by'] = Auth::id();
+        $data['updated_by'] = Auth::id();
 
         Event::create($data);
 
-        return redirect()->route('admin.events.index')
+        return redirect()
+            ->route('admin.events.index')
             ->with('success', 'Event created successfully.');
     }
 
@@ -126,6 +138,15 @@ class EventController extends Controller
             'location' => 'nullable|string|max:255',
             'capacity' => 'nullable|integer|min:0',
             'price' => 'required|numeric|min:0',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Spouse Charge Mode
+            |--------------------------------------------------------------------------
+            */
+
+            'spouse_charge_mode' => 'required|in:SEPARATE,COMBINED',
+
             'status' => 'required|in:ACTIVE,SCHEDULED,RESCHEDULED,CANCELLED,COMPLETED',
             'confirmation_deadline' => 'nullable|date',
             'min_attendees' => 'nullable|integer|min:0',
@@ -135,11 +156,13 @@ class EventController extends Controller
         ]);
 
         $data = $request->all();
-        $data['updated_by'] = auth()->id();
+
+        $data['updated_by'] = Auth::id();
 
         $event->update($data);
 
-        return redirect()->route('admin.events.index')
+        return redirect()
+            ->route('admin.events.index')
             ->with('success', 'Event updated successfully.');
     }
 
