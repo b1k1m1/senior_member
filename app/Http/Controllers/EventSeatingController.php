@@ -1268,4 +1268,1275 @@ class EventSeatingController extends Controller
         }
     } // End Method
 
+    public function partyDetails($eventId, $memberId)
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Event
+        |--------------------------------------------------------------------------
+        */
+
+        $event = DB::table('events')
+            ->where('id', $eventId)
+            ->first();
+
+        if (!$event) {
+            abort(404, 'Event not found.');
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Selected Member
+        |--------------------------------------------------------------------------
+        */
+
+        $member = DB::table('members')
+            ->where('id', $memberId)
+            ->where('status', 'ACTIVE')
+            ->first();
+
+        if (!$member) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Member not found.',
+            ], 404);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Selected Member Must Be Confirmed
+        |--------------------------------------------------------------------------
+        */
+
+        $primaryAttendee = DB::table('event_attendees')
+            ->where('event_id', $eventId)
+            ->where('member_id', $memberId)
+            ->where('status', 'CONFIRMED')
+            ->first();
+
+        if (!$primaryAttendee) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This member is not a confirmed attendee.',
+            ], 422);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Party Member IDs
+        |--------------------------------------------------------------------------
+        */
+
+        $partyMemberIds = collect([
+            (int) $member->id,
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Find Confirmed Spouse / Associated Member
+        |--------------------------------------------------------------------------
+        */
+
+        $spouseMember = null;
+        $spouseAttendee = null;
+
+        if (!empty($member->receipt_no)) {
+
+            $possibleSpouse = DB::table('members')
+                ->where('receipt_no', $member->receipt_no)
+                ->where('id', '!=', $member->id)
+                ->where('status', 'ACTIVE')
+                ->orderBy('id')
+                ->first();
+
+            if ($possibleSpouse) {
+
+                $possibleSpouseAttendee = DB::table('event_attendees')
+                    ->where('event_id', $eventId)
+                    ->where('member_id', $possibleSpouse->id)
+                    ->where('status', 'CONFIRMED')
+                    ->first();
+
+                if ($possibleSpouseAttendee) {
+
+                    $spouseMember = $possibleSpouse;
+                    $spouseAttendee = $possibleSpouseAttendee;
+
+                    $partyMemberIds->push(
+                        (int) $spouseMember->id
+                    );
+                }
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Party Attendees
+        |--------------------------------------------------------------------------
+        */
+
+        $partyAttendees = DB::table('event_attendees')
+            ->where('event_id', $eventId)
+            ->where('status', 'CONFIRMED')
+            ->whereIn(
+                'member_id',
+                $partyMemberIds->unique()->values()
+            )
+            ->get();
+
+
+        $partyAttendeeIds = $partyAttendees
+            ->pluck('id')
+            ->filter()
+            ->unique()
+            ->values();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Named Guests
+        |--------------------------------------------------------------------------
+        */
+
+        $partyGuests = collect();
+
+        if ($partyAttendeeIds->isNotEmpty()) {
+
+            $partyGuests = DB::table('event_attendee_guests')
+                ->whereIn(
+                    'event_attendee_id',
+                    $partyAttendeeIds
+                )
+                ->orderBy('event_attendee_id')
+                ->orderBy('guest_no')
+                ->get();
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Event Tables
+        |--------------------------------------------------------------------------
+        */
+
+        $eventTables = DB::table('event_tables')
+            ->where('event_id', $eventId)
+            ->get()
+            ->keyBy('id');
+
+        $eventTableIds = $eventTables
+            ->pluck('id')
+            ->values();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Existing Seat Assignments
+        |--------------------------------------------------------------------------
+        */
+
+        $memberSeats = collect();
+        $guestSeats = collect();
+
+        if ($eventTableIds->isNotEmpty()) {
+
+            $memberSeats = DB::table('event_seats')
+                ->whereIn('event_table_id', $eventTableIds)
+                ->whereIn(
+                    'member_id',
+                    $partyMemberIds->unique()->values()
+                )
+                ->whereNotNull('member_id')
+                ->get()
+                ->keyBy('member_id');
+
+
+            if ($partyGuests->isNotEmpty()) {
+
+                $guestSeats = DB::table('event_seats')
+                    ->whereIn('event_table_id', $eventTableIds)
+                    ->whereIn(
+                        'event_guest_id',
+                        $partyGuests->pluck('id')
+                    )
+                    ->whereNotNull('event_guest_id')
+                    ->get()
+                    ->keyBy('event_guest_id');
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Helper - Table Label
+        |--------------------------------------------------------------------------
+        */
+
+        $getTableLabel = function ($eventTableId) use ($eventTables) {
+
+            if (!$eventTableId) {
+                return null;
+            }
+
+            $table = $eventTables->get($eventTableId);
+
+            if (!$table) {
+                return null;
+            }
+
+            if (!empty($table->table_name)) {
+                return $table->table_name;
+            }
+
+            return 'Table ' . $table->table_no;
+        };
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Build Member Party List
+        |--------------------------------------------------------------------------
+        */
+
+        $partyMembers = collect();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Primary Member
+        |--------------------------------------------------------------------------
+        */
+
+        $primarySeat = $memberSeats->get(
+            $member->id
+        );
+
+        $partyMembers->push([
+            'type' => 'MEMBER',
+
+            'id' => (int) $member->id,
+
+            'member_no' => $member->member_no,
+
+            'name' => trim(
+                $member->first_name . ' ' .
+                    $member->last_name
+            ),
+
+            'relationship' => 'Member',
+
+            'seated' => $primarySeat ? true : false,
+
+            'seat_id' => $primarySeat
+                ? (int) $primarySeat->id
+                : null,
+
+            'event_table_id' => $primarySeat
+                ? (int) $primarySeat->event_table_id
+                : null,
+
+            'table_label' => $primarySeat
+                ? $getTableLabel($primarySeat->event_table_id)
+                : null,
+
+            'seat_no' => $primarySeat
+                ? (int) $primarySeat->seat_no
+                : null,
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Spouse
+        |--------------------------------------------------------------------------
+        */
+
+        if ($spouseMember) {
+
+            $spouseSeat = $memberSeats->get(
+                $spouseMember->id
+            );
+
+            $partyMembers->push([
+                'type' => 'MEMBER',
+
+                'id' => (int) $spouseMember->id,
+
+                'member_no' => $spouseMember->member_no,
+
+                'name' => trim(
+                    $spouseMember->first_name . ' ' .
+                        $spouseMember->last_name
+                ),
+
+                'relationship' => 'Spouse',
+
+                'seated' => $spouseSeat ? true : false,
+
+                'seat_id' => $spouseSeat
+                    ? (int) $spouseSeat->id
+                    : null,
+
+                'event_table_id' => $spouseSeat
+                    ? (int) $spouseSeat->event_table_id
+                    : null,
+
+                'table_label' => $spouseSeat
+                    ? $getTableLabel($spouseSeat->event_table_id)
+                    : null,
+
+                'seat_no' => $spouseSeat
+                    ? (int) $spouseSeat->seat_no
+                    : null,
+            ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Guests
+        |--------------------------------------------------------------------------
+        */
+
+        $guestRows = collect();
+
+        foreach ($partyGuests as $guest) {
+
+            $guestSeat = $guestSeats->get(
+                $guest->id
+            );
+
+            $guestRows->push([
+                'type' => 'GUEST',
+
+                'id' => (int) $guest->id,
+
+                'name' => $guest->guest_name ?: 'Guest',
+
+                'guest_type' => $guest->guest_type,
+
+                'relationship' => ucfirst(
+                    strtolower($guest->guest_type)
+                ),
+
+                'seated' => $guestSeat ? true : false,
+
+                'seat_id' => $guestSeat
+                    ? (int) $guestSeat->id
+                    : null,
+
+                'event_table_id' => $guestSeat
+                    ? (int) $guestSeat->event_table_id
+                    : null,
+
+                'table_label' => $guestSeat
+                    ? $getTableLabel($guestSeat->event_table_id)
+                    : null,
+
+                'seat_no' => $guestSeat
+                    ? (int) $guestSeat->seat_no
+                    : null,
+            ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Party Counts
+        |--------------------------------------------------------------------------
+        */
+
+        $totalPartySize =
+            $partyMembers->count() +
+            $guestRows->count();
+
+
+        $alreadySeated =
+            $partyMembers
+            ->where('seated', true)
+            ->count()
+            +
+            $guestRows
+            ->where('seated', true)
+            ->count();
+
+
+        $needsSeat =
+            $totalPartySize -
+            $alreadySeated;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Return Party Information
+        |--------------------------------------------------------------------------
+        */
+
+        return response()->json([
+            'success' => true,
+
+            'party' => [
+
+                'primary_member_id' =>
+                (int) $member->id,
+
+                'primary_member_no' =>
+                $member->member_no,
+
+                'primary_member_name' =>
+                trim(
+                    $member->first_name . ' ' .
+                        $member->last_name
+                ),
+
+                'total_party_size' =>
+                $totalPartySize,
+
+                'already_seated' =>
+                $alreadySeated,
+
+                'needs_seat' =>
+                $needsSeat,
+
+                'members' =>
+                $partyMembers->values(),
+
+                'guests' =>
+                $guestRows->values(),
+            ],
+        ]);
+    } // End Method
+
+    public function partyAvailableTables($eventId, $memberId)
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Validate Event
+        |--------------------------------------------------------------------------
+        */
+
+        $event = DB::table('events')
+            ->where('id', $eventId)
+            ->first();
+
+        if (!$event) {
+            abort(404, 'Event not found.');
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validate Primary Member
+        |--------------------------------------------------------------------------
+        */
+
+        $member = DB::table('members')
+            ->where('id', $memberId)
+            ->where('status', 'ACTIVE')
+            ->first();
+
+        if (!$member) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Member not found.',
+            ], 404);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Primary Must Be Confirmed
+        |--------------------------------------------------------------------------
+        */
+
+        $primaryAttendee = DB::table('event_attendees')
+            ->where('event_id', $eventId)
+            ->where('member_id', $memberId)
+            ->where('status', 'CONFIRMED')
+            ->first();
+
+        if (!$primaryAttendee) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Member is not a confirmed attendee.',
+            ], 422);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Party Member IDs
+        |--------------------------------------------------------------------------
+        */
+
+        $partyMemberIds = collect([
+            (int) $memberId,
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Find Confirmed Spouse
+        |--------------------------------------------------------------------------
+        */
+
+        if (!empty($member->receipt_no)) {
+
+            $possibleSpouse = DB::table('members')
+                ->where('receipt_no', $member->receipt_no)
+                ->where('id', '!=', $member->id)
+                ->where('status', 'ACTIVE')
+                ->orderBy('id')
+                ->first();
+
+            if ($possibleSpouse) {
+
+                $spouseAttendee = DB::table('event_attendees')
+                    ->where('event_id', $eventId)
+                    ->where('member_id', $possibleSpouse->id)
+                    ->where('status', 'CONFIRMED')
+                    ->first();
+
+                if ($spouseAttendee) {
+
+                    $partyMemberIds->push(
+                        (int) $possibleSpouse->id
+                    );
+                }
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Party Attendees
+        |--------------------------------------------------------------------------
+        */
+
+        $partyAttendees = DB::table('event_attendees')
+            ->where('event_id', $eventId)
+            ->where('status', 'CONFIRMED')
+            ->whereIn(
+                'member_id',
+                $partyMemberIds
+                    ->unique()
+                    ->values()
+            )
+            ->get();
+
+
+        $partyAttendeeIds = $partyAttendees
+            ->pluck('id')
+            ->filter()
+            ->unique()
+            ->values();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Party Guests
+        |--------------------------------------------------------------------------
+        */
+
+        $partyGuests = collect();
+
+        if ($partyAttendeeIds->isNotEmpty()) {
+
+            $partyGuests = DB::table('event_attendee_guests')
+                ->whereIn(
+                    'event_attendee_id',
+                    $partyAttendeeIds
+                )
+                ->get();
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Event Tables
+        |--------------------------------------------------------------------------
+        */
+
+        $tables = DB::table('event_tables')
+            ->where('event_id', $eventId)
+            ->orderBy('table_no')
+            ->get();
+
+
+        $tableIds = $tables
+            ->pluck('id')
+            ->filter()
+            ->values();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Existing Party Member Seats
+        |--------------------------------------------------------------------------
+        */
+
+        $seatedMemberIds = collect();
+
+        if ($tableIds->isNotEmpty()) {
+
+            $seatedMemberIds = DB::table('event_seats')
+                ->whereIn('event_table_id', $tableIds)
+                ->whereIn(
+                    'member_id',
+                    $partyMemberIds
+                )
+                ->whereNotNull('member_id')
+                ->pluck('member_id')
+                ->unique()
+                ->values();
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Existing Party Guest Seats
+        |--------------------------------------------------------------------------
+        */
+
+        $seatedGuestIds = collect();
+
+        if (
+            $tableIds->isNotEmpty() &&
+            $partyGuests->isNotEmpty()
+        ) {
+
+            $seatedGuestIds = DB::table('event_seats')
+                ->whereIn('event_table_id', $tableIds)
+                ->whereIn(
+                    'event_guest_id',
+                    $partyGuests->pluck('id')
+                )
+                ->whereNotNull('event_guest_id')
+                ->pluck('event_guest_id')
+                ->unique()
+                ->values();
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Number Still Needing Seats
+        |--------------------------------------------------------------------------
+        */
+
+        $totalPartySize =
+            $partyMemberIds
+            ->unique()
+            ->count()
+            +
+            $partyGuests
+            ->count();
+
+
+        $alreadySeated =
+            $seatedMemberIds
+            ->count()
+            +
+            $seatedGuestIds
+            ->count();
+
+
+        $needsSeat =
+            $totalPartySize -
+            $alreadySeated;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Build Table Availability
+        |--------------------------------------------------------------------------
+        */
+
+        $availableTables = collect();
+
+
+        foreach ($tables as $table) {
+
+            $seats = DB::table('event_seats')
+                ->where('event_table_id', $table->id)
+                ->orderBy('seat_no')
+                ->get();
+
+
+            $availableSeats = $seats
+                ->filter(function ($seat) {
+
+                    return
+                        $seat->seat_status === 'AVAILABLE'
+                        &&
+                        is_null($seat->member_id)
+                        &&
+                        is_null($seat->event_guest_id);
+                })
+                ->values();
+
+
+            $availableCount =
+                $availableSeats->count();
+
+
+            $availableTables->push([
+
+                'table_id' =>
+                (int) $table->id,
+
+                'table_no' =>
+                (int) $table->table_no,
+
+                'table_name' =>
+                $table->table_name
+                    ?: 'Table ' . $table->table_no,
+
+                'capacity' =>
+                (int) $table->capacity,
+
+                'available_seats' =>
+                $availableCount,
+
+                'can_fit_party' =>
+                $availableCount >= $needsSeat,
+
+                'seat_numbers' =>
+                $availableSeats
+                    ->pluck('seat_no')
+                    ->values(),
+
+            ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Return
+        |--------------------------------------------------------------------------
+        */
+
+        return response()->json([
+
+            'success' => true,
+
+            'party' => [
+
+                'total_party_size' =>
+                $totalPartySize,
+
+                'already_seated' =>
+                $alreadySeated,
+
+                'needs_seat' =>
+                $needsSeat,
+
+            ],
+
+            'tables' =>
+            $availableTables
+                ->values(),
+
+        ]);
+    } // End Method
+
+    public function seatPartyTogether(Request $request, $eventId, $memberId)
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Validate Request
+        |--------------------------------------------------------------------------
+        */
+
+        $validated = $request->validate([
+            'table_id' => [
+                'required',
+                'integer',
+            ],
+        ]);
+
+        $tableId = (int) $validated['table_id'];
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Event
+        |--------------------------------------------------------------------------
+        */
+
+        $event = DB::table('events')
+            ->where('id', $eventId)
+            ->first();
+
+        if (!$event) {
+            abort(404, 'Event not found.');
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Primary Member
+        |--------------------------------------------------------------------------
+        */
+
+        $member = DB::table('members')
+            ->where('id', $memberId)
+            ->where('status', 'ACTIVE')
+            ->first();
+
+        if (!$member) {
+
+            return back()->with(
+                'error',
+                'Member not found.'
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Primary Member Must Be Confirmed
+        |--------------------------------------------------------------------------
+        */
+
+        $primaryAttendee = DB::table('event_attendees')
+            ->where('event_id', $eventId)
+            ->where('member_id', $memberId)
+            ->where('status', 'CONFIRMED')
+            ->first();
+
+        if (!$primaryAttendee) {
+
+            return back()->with(
+                'error',
+                'This member is not a confirmed attendee.'
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Selected Table
+        |--------------------------------------------------------------------------
+        */
+
+        $selectedTable = DB::table('event_tables')
+            ->where('id', $tableId)
+            ->where('event_id', $eventId)
+            ->first();
+
+        if (!$selectedTable) {
+
+            return back()->with(
+                'error',
+                'Selected table is invalid.'
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Party Member IDs
+        |--------------------------------------------------------------------------
+        */
+
+        $partyMemberIds = collect([
+            (int) $member->id,
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Find Confirmed Spouse
+        |--------------------------------------------------------------------------
+        */
+
+        $spouseMember = null;
+
+        if (!empty($member->receipt_no)) {
+
+            $possibleSpouse = DB::table('members')
+                ->where('receipt_no', $member->receipt_no)
+                ->where('id', '!=', $member->id)
+                ->where('status', 'ACTIVE')
+                ->orderBy('id')
+                ->first();
+
+            if ($possibleSpouse) {
+
+                $spouseAttendee = DB::table('event_attendees')
+                    ->where('event_id', $eventId)
+                    ->where('member_id', $possibleSpouse->id)
+                    ->where('status', 'CONFIRMED')
+                    ->first();
+
+                if ($spouseAttendee) {
+
+                    $spouseMember = $possibleSpouse;
+
+                    $partyMemberIds->push(
+                        (int) $spouseMember->id
+                    );
+                }
+            }
+        }
+
+
+        $partyMemberIds = $partyMemberIds
+            ->unique()
+            ->values();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Party Attendees
+        |--------------------------------------------------------------------------
+        */
+
+        $partyAttendees = DB::table('event_attendees')
+            ->where('event_id', $eventId)
+            ->where('status', 'CONFIRMED')
+            ->whereIn(
+                'member_id',
+                $partyMemberIds
+            )
+            ->get();
+
+
+        $partyAttendeeIds = $partyAttendees
+            ->pluck('id')
+            ->filter()
+            ->unique()
+            ->values();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Party Guests
+        |--------------------------------------------------------------------------
+        */
+
+        $partyGuests = collect();
+
+        if ($partyAttendeeIds->isNotEmpty()) {
+
+            $partyGuests = DB::table('event_attendee_guests')
+                ->whereIn(
+                    'event_attendee_id',
+                    $partyAttendeeIds
+                )
+                ->orderBy('event_attendee_id')
+                ->orderBy('guest_no')
+                ->get();
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Event Table IDs
+        |--------------------------------------------------------------------------
+        */
+
+        $eventTableIds = DB::table('event_tables')
+            ->where('event_id', $eventId)
+            ->pluck('id')
+            ->filter()
+            ->values();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Transaction
+        |--------------------------------------------------------------------------
+        */
+
+        DB::beginTransaction();
+
+        try {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Lock Event Seats
+            |--------------------------------------------------------------------------
+            |
+            | This protects the party assignment while seats are being allocated.
+            |--------------------------------------------------------------------------
+            */
+
+            $eventSeats = DB::table('event_seats')
+                ->whereIn(
+                    'event_table_id',
+                    $eventTableIds
+                )
+                ->lockForUpdate()
+                ->get();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Members Already Seated
+            |--------------------------------------------------------------------------
+            */
+
+            $seatedMemberIds = $eventSeats
+                ->pluck('member_id')
+                ->filter()
+                ->unique()
+                ->values();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Guests Already Seated
+            |--------------------------------------------------------------------------
+            */
+
+            $seatedGuestIds = $eventSeats
+                ->pluck('event_guest_id')
+                ->filter()
+                ->unique()
+                ->values();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Unseated Members
+            |--------------------------------------------------------------------------
+            |
+            | Order remains:
+            |
+            | 1. Primary
+            | 2. Spouse
+            |--------------------------------------------------------------------------
+            */
+
+            $unseatedMemberIds = $partyMemberIds
+                ->filter(function ($partyMemberId) use ($seatedMemberIds) {
+
+                    return !$seatedMemberIds
+                        ->contains($partyMemberId);
+                })
+                ->values();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Unseated Guests
+            |--------------------------------------------------------------------------
+            */
+
+            $unseatedGuests = $partyGuests
+                ->filter(function ($guest) use ($seatedGuestIds) {
+
+                    return !$seatedGuestIds
+                        ->contains($guest->id);
+                })
+                ->values();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Number Of Seats Needed
+            |--------------------------------------------------------------------------
+            */
+
+            $needsSeat =
+                $unseatedMemberIds->count()
+                +
+                $unseatedGuests->count();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Everyone Already Seated
+            |--------------------------------------------------------------------------
+            */
+
+            if ($needsSeat === 0) {
+
+                DB::commit();
+
+                return back()->with(
+                    'success',
+                    'Everyone in this party is already seated.'
+                );
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Available Seats At Selected Table
+            |--------------------------------------------------------------------------
+            */
+
+            $availableSeats = $eventSeats
+                ->filter(function ($seat) use ($tableId) {
+
+                    return
+                        (int) $seat->event_table_id === (int) $tableId
+                        &&
+                        $seat->seat_status === 'AVAILABLE'
+                        &&
+                        is_null($seat->member_id)
+                        &&
+                        is_null($seat->event_guest_id);
+                })
+                ->sortBy('seat_no')
+                ->values();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Re-check Capacity
+            |--------------------------------------------------------------------------
+            */
+
+            if ($availableSeats->count() < $needsSeat) {
+
+                throw new \RuntimeException(
+                    'The selected table no longer has enough available seats for this party.'
+                );
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Seat Pointer
+            |--------------------------------------------------------------------------
+            */
+
+            $seatIndex = 0;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Assign Members
+            |--------------------------------------------------------------------------
+            */
+
+            foreach ($unseatedMemberIds as $partyMemberId) {
+
+                $seat = $availableSeats
+                    ->get($seatIndex);
+
+
+                if (!$seat) {
+
+                    throw new \RuntimeException(
+                        'Unable to locate an available seat for the party.'
+                    );
+                }
+
+
+                DB::table('event_seats')
+                    ->where('id', $seat->id)
+                    ->update([
+
+                        'member_id' =>
+                        (int) $partyMemberId,
+
+                        'event_guest_id' =>
+                        null,
+
+                        'seat_status' =>
+                        'ASSIGNED',
+
+                        'updated_by' =>
+                        Auth::id(),
+
+                        'updated_at' =>
+                        now(),
+
+                    ]);
+
+
+                $seatIndex++;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Assign Guests
+            |--------------------------------------------------------------------------
+            */
+
+            foreach ($unseatedGuests as $guest) {
+
+                $seat = $availableSeats
+                    ->get($seatIndex);
+
+
+                if (!$seat) {
+
+                    throw new \RuntimeException(
+                        'Unable to locate an available seat for the party.'
+                    );
+                }
+
+
+                DB::table('event_seats')
+                    ->where('id', $seat->id)
+                    ->update([
+
+                        'member_id' =>
+                        null,
+
+                        'event_guest_id' =>
+                        (int) $guest->id,
+
+                        'seat_status' =>
+                        'ASSIGNED',
+
+                        'updated_by' =>
+                        Auth::id(),
+
+                        'updated_at' =>
+                        now(),
+
+                    ]);
+
+
+                $seatIndex++;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Commit
+            |--------------------------------------------------------------------------
+            */
+
+            DB::commit();
+
+
+            return back()->with(
+                'success',
+                'Party seated successfully at ' .
+                    ($selectedTable->table_name ?: 'Table ' . $selectedTable->table_no) .
+                    '.'
+            );
+        } catch (\Throwable $e) {
+
+            DB::rollBack();
+
+            report($e);
+
+
+            return back()->with(
+                'error',
+                $e instanceof \RuntimeException
+                    ? $e->getMessage()
+                    : 'Unable to seat the party. No seating changes were saved.'
+            );
+        }
+    } // End Method
+
+
 }

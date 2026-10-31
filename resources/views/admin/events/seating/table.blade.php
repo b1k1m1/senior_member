@@ -117,6 +117,77 @@
             </div>
 
             {{-- ============================================================= --}}
+            {{-- PARTY SEATING PREVIEW --}}
+            {{-- ============================================================= --}}
+
+            <div class="card mb-4">
+
+                <div class="card-header d-flex justify-content-between align-items-center">
+
+                    <strong>
+                        Seat Party Together
+                    </strong>
+
+                    <span class="text-muted small">
+                        Preview member, spouse and guests
+                    </span>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    <div class="row align-items-end">
+
+                        <div class="col-lg-8 col-md-7 mb-3 mb-md-0">
+
+                            <label for="party_member_id" class="form-label">
+                                Select Confirmed Member
+                            </label>
+
+
+                            <select id="party_member_id" class="form-select">
+
+                                <option value="">
+                                    Select Member
+                                </option>
+
+
+                                @foreach ($members as $partyMember)
+                                    <option value="{{ $partyMember->id }}">
+
+                                        {{ $partyMember->member_no }}
+                                        -
+                                        {{ $partyMember->last_name }},
+                                        {{ $partyMember->first_name }}
+
+                                    </option>
+                                @endforeach
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-lg-4 col-md-5">
+
+                            <button type="button" class="btn btn-primary w-100" id="previewPartyBtn" disabled>
+
+                                <i class="fas fa-users me-1"></i>
+
+                                View Party
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {{-- ============================================================= --}}
             {{-- GRAPHICAL TABLE --}}
             {{-- ============================================================= --}}
             <div class="card mb-4">
@@ -649,6 +720,264 @@
 
         </div>
     </div>
+
+    {{-- ============================================================= --}}
+    {{-- PARTY PREVIEW MODAL --}}
+    {{-- ============================================================= --}}
+
+    <div class="modal fade" id="partyPreviewModal" tabindex="-1" aria-labelledby="partyPreviewModalLabel"
+        aria-hidden="true">
+
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+
+            <div class="modal-content">
+
+
+                {{-- Header --}}
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title" id="partyPreviewModalLabel">
+                        Party Details
+                    </h5>
+
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+                </div>
+
+
+                {{-- Body --}}
+
+                <div class="modal-body">
+
+
+                    {{-- Loading --}}
+
+                    <div id="partyLoading" class="text-center py-4" style="display: none;">
+
+                        <div class="spinner-border text-primary" role="status"></div>
+
+                        <div class="mt-2 text-muted">
+                            Loading party information...
+                        </div>
+
+                    </div>
+
+
+                    {{-- Error --}}
+
+                    <div id="partyError" class="alert alert-danger" style="display: none;"></div>
+
+
+                    {{-- Party Content --}}
+
+                    <div id="partyContent" style="display: none;">
+
+
+                        {{-- Primary Member --}}
+
+                        <div class="mb-4">
+
+                            <div class="text-muted small">
+                                Primary Member
+                            </div>
+
+                            <h5 class="mb-0" id="partyPrimaryMember"></h5>
+
+                        </div>
+
+
+                        {{-- Summary Cards --}}
+
+                        <div class="row mb-4">
+
+
+                            <div class="col-md-4 mb-3">
+
+                                <div class="card border h-100">
+
+                                    <div class="card-body text-center">
+
+                                        <div class="text-muted">
+                                            Party Size
+                                        </div>
+
+                                        <h3 class="mb-0" id="partyTotalCount">
+                                            0
+                                        </h3>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-4 mb-3">
+
+                                <div class="card border h-100">
+
+                                    <div class="card-body text-center">
+
+                                        <div class="text-muted">
+                                            Already Seated
+                                        </div>
+
+                                        <h3 class="mb-0 text-success" id="partySeatedCount">
+                                            0
+                                        </h3>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-4 mb-3">
+
+                                <div class="card border h-100">
+
+                                    <div class="card-body text-center">
+
+                                        <div class="text-muted">
+                                            Needs Seat
+                                        </div>
+
+                                        <h3 class="mb-0 text-primary" id="partyNeedsSeatCount">
+                                            0
+                                        </h3>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- Party Members Table --}}
+
+                        <div class="table-responsive">
+
+                            <table class="table table-bordered align-middle mb-0">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th style="width: 100px;">
+                                            Type
+                                        </th>
+
+                                        <th>
+                                            Name
+                                        </th>
+
+                                        <th style="width: 150px;">
+                                            Relationship
+                                        </th>
+
+                                        <th style="width: 140px;" class="text-center">
+                                            Seating
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody id="partyPeopleBody">
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                        {{-- ============================================================= --}}
+                        {{-- TABLE SELECTION --}}
+                        {{-- ============================================================= --}}
+
+                        <div class="mt-4">
+
+                            <h6 class="mb-3">
+                                Select Table
+                            </h6>
+
+
+                            <div id="partyTableLoading" class="text-center py-3" style="display: none;">
+
+                                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+
+                                <span class="ms-2 text-muted">
+                                    Checking table availability...
+                                </span>
+
+                            </div>
+
+
+                            <div id="partyTableError" class="alert alert-danger" style="display: none;"></div>
+
+
+                            <div id="partyTableList" class="row"></div>
+
+
+                            <input type="hidden" id="selected_party_table_id" value="">
+
+                        </div>
+
+
+                        <div class="alert alert-info mt-3 mb-0" id="partyReadyMessage">
+
+                            Party information verified.
+
+                            The next step will allow us to select a table
+                            and seat the unassigned members of this party together.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                {{-- Footer --}}
+
+                <div class="modal-footer">
+
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Close
+                    </button>
+
+
+                    <form method="POST" id="seatPartyForm" action="" class="m-0">
+
+                        @csrf
+
+
+                        <input type="hidden" name="table_id" id="seat_party_table_id" value="">
+
+
+                        <button type="submit" class="btn btn-success" id="seatPartyBtn" disabled>
+
+                            <i class="fas fa-users me-1"></i>
+
+                            Seat Party Together
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </div>
 @endsection
 
 {{-- ============================================================= --}}
@@ -787,6 +1116,20 @@
         box-shadow: 0 0 0 2px rgba(13, 110, 253, .15);
     }
 
+    .bg-purple {
+        background-color: #8b5cf6 !important;
+        color: #ffffff !important;
+    }
+
+    .party-table-option {
+        cursor: pointer;
+    }
+
+    .party-table-selected {
+        border-width: 2px !important;
+        box-shadow: 0 0 0 3px rgba(25, 135, 84, .12);
+    }
+
     #assignSeatModal .select2-container {
         width: 100% !important;
     }
@@ -850,6 +1193,18 @@
                 placeholder: 'Select Guest',
                 allowClear: true,
                 dropdownParent: $('#assignSeatModal')
+            });
+
+            /*
+            |--------------------------------------------------------------------------
+            | Party Member Select2
+            |--------------------------------------------------------------------------
+            */
+
+            $('#party_member_id').select2({
+                width: '100%',
+                placeholder: 'Select Confirmed Member',
+                allowClear: true
             });
 
             $('#modal_assignment_type').on('change', function() {
@@ -956,6 +1311,986 @@
                     $('#modalAssignButton').text('Assign Guest');
                 @endif
             });
+
+            /*
+            |--------------------------------------------------------------------------
+            | Party Preview
+            |--------------------------------------------------------------------------
+            */
+
+            const partyDetailsUrlTemplate =
+                "{{ route('events.seating.party.details', [
+                    'eventId' => $event->id,
+                    'memberId' => '__MEMBER_ID__',
+                ]) }}";
+
+            const partyTablesUrlTemplate =
+                "{{ route('events.seating.party.tables', [
+                    'eventId' => $event->id,
+                    'memberId' => '__MEMBER_ID__',
+                ]) }}";
+
+            const partySeatUrlTemplate =
+                "{{ route('events.seating.party.seat', [
+                    'eventId' => $event->id,
+                    'memberId' => '__MEMBER_ID__',
+                ]) }}";
+
+            /*
+            |--------------------------------------------------------------------------
+            | Enable / Disable Party Button
+            |--------------------------------------------------------------------------
+            */
+
+            $('#party_member_id').on(
+                'change',
+                function() {
+
+                    const memberId =
+                        $(this).val();
+
+
+                    $('#previewPartyBtn')
+                        .prop(
+                            'disabled',
+                            !memberId
+                        );
+                }
+            );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Preview Party
+            |--------------------------------------------------------------------------
+            */
+
+            $('#previewPartyBtn').on(
+                'click',
+                function() {
+
+                    const memberId =
+                        $('#party_member_id').val();
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Prepare Seat Party Form
+                    |--------------------------------------------------------------------------
+                    */
+
+                    const seatPartyUrl =
+                        partySeatUrlTemplate.replace(
+                            '__MEMBER_ID__',
+                            memberId
+                        );
+
+
+                    $('#seatPartyForm')
+                        .attr(
+                            'action',
+                            seatPartyUrl
+                        );
+
+
+                    $('#seat_party_table_id')
+                        .val('');
+
+
+                    $('#seatPartyBtn')
+                        .prop(
+                            'disabled',
+                            true
+                        );
+
+
+                    if (!memberId) {
+                        return;
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Reset Modal
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $('#partyError')
+                        .hide()
+                        .text('');
+
+
+                    $('#partyContent')
+                        .hide();
+
+
+                    $('#partyLoading')
+                        .show();
+
+
+                    $('#partyPeopleBody')
+                        .empty();
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Open Modal
+                    |--------------------------------------------------------------------------
+                    */
+
+                    const modalElement =
+                        document.getElementById(
+                            'partyPreviewModal'
+                        );
+
+
+                    const modal =
+                        bootstrap.Modal
+                        .getOrCreateInstance(
+                            modalElement
+                        );
+
+
+                    modal.show();
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Party Details URL
+                    |--------------------------------------------------------------------------
+                    */
+
+                    const url =
+                        partyDetailsUrlTemplate.replace(
+                            '__MEMBER_ID__',
+                            memberId
+                        );
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Load Party
+                    |--------------------------------------------------------------------------
+                    */
+
+                    fetch(url, {
+
+                            method: 'GET',
+
+                            headers: {
+
+                                'Accept': 'application/json',
+
+                                'X-Requested-With': 'XMLHttpRequest'
+
+                            }
+
+                        })
+
+                        .then(async response => {
+
+                            const data =
+                                await response.json();
+
+
+                            if (!response.ok) {
+
+                                throw new Error(
+                                    data.message ||
+                                    'Unable to load party information.'
+                                );
+                            }
+
+
+                            return data;
+
+                        })
+
+                        .then(data => {
+
+                            $('#partyLoading')
+                                .hide();
+
+
+                            if (
+                                !data.success ||
+                                !data.party
+                            ) {
+
+                                throw new Error(
+                                    data.message ||
+                                    'Party information could not be loaded.'
+                                );
+                            }
+
+
+                            const party =
+                                data.party;
+
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Primary Member
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $('#partyPrimaryMember')
+                                .text(
+                                    party.primary_member_no +
+                                    ' - ' +
+                                    party.primary_member_name
+                                );
+
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Counts
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $('#partyTotalCount')
+                                .text(
+                                    party.total_party_size
+                                );
+
+
+                            $('#partySeatedCount')
+                                .text(
+                                    party.already_seated
+                                );
+
+
+                            $('#partyNeedsSeatCount')
+                                .text(
+                                    party.needs_seat
+                                );
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Fully Seated / Needs Seating Message
+                            |--------------------------------------------------------------------------
+                            */
+
+                            if (parseInt(party.needs_seat || 0) === 0) {
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Party Fully Seated
+                                |--------------------------------------------------------------------------
+                                */
+
+                                $('#seatPartyBtn')
+                                    .show()
+                                    .prop('disabled', true)
+                                    .hide();
+
+
+                                $('#partyReadyMessage')
+                                    .removeClass('alert-info')
+                                    .addClass('alert-success')
+                                    .html(
+                                        '<strong>This party is fully seated.</strong>'
+                                    );
+
+                            } else {
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Party Still Needs Seating
+                                |--------------------------------------------------------------------------
+                                */
+
+                                $('#seatPartyBtn')
+                                    .show()
+                                    .prop('disabled', true);
+
+
+                                $('#partyReadyMessage')
+                                    .removeClass('alert-success')
+                                    .addClass('alert-info')
+                                    .html(
+                                        'Party information verified. ' +
+                                        'Select a table below to seat the unassigned members of this party together.'
+                                    );
+                            }
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Members
+                            |--------------------------------------------------------------------------
+                            */
+
+                            if (
+                                Array.isArray(
+                                    party.members
+                                )
+                            ) {
+
+                                party.members.forEach(
+                                    function(person) {
+
+                                        addPartyRow(
+                                            person
+                                        );
+
+                                    }
+                                );
+                            }
+
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Guests
+                            |--------------------------------------------------------------------------
+                            */
+
+                            if (
+                                Array.isArray(
+                                    party.guests
+                                )
+                            ) {
+
+                                party.guests.forEach(
+                                    function(person) {
+
+                                        addPartyRow(
+                                            person
+                                        );
+
+                                    }
+                                );
+                            }
+
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Show Content
+                            |--------------------------------------------------------------------------
+                            */
+
+                            $('#partyContent')
+                                .show();
+
+                            loadPartyTables(
+                                memberId
+                            );
+
+                        })
+
+                        .catch(error => {
+
+                            $('#partyLoading')
+                                .hide();
+
+
+                            $('#partyContent')
+                                .hide();
+
+
+                            $('#partyError')
+                                .text(
+                                    error.message
+                                )
+                                .show();
+
+                        });
+
+                }
+            );
+
+
+            function escapeHtml(value) {
+                return $('<div>')
+                    .text(
+                        value ?? ''
+                    )
+                    .html();
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Add Party Row
+            |--------------------------------------------------------------------------
+            */
+
+            function addPartyRow(person) {
+                const row =
+                    $('<tr>');
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Type
+                |--------------------------------------------------------------------------
+                */
+
+                const typeBadge =
+                    person.type === 'GUEST' ?
+                    $('<span>')
+                    .addClass(
+                        'badge bg-purple'
+                    )
+                    .text('Guest') :
+                    $('<span>')
+                    .addClass(
+                        'badge bg-success'
+                    )
+                    .text('Member');
+
+
+                const typeCell =
+                    $('<td>');
+
+                typeCell.append(
+                    typeBadge
+                );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Name
+                |--------------------------------------------------------------------------
+                */
+
+                const nameCell =
+                    $('<td>');
+
+
+                const nameStrong =
+                    $('<strong>')
+                    .text(
+                        person.name || ''
+                    );
+
+
+                nameCell.append(
+                    nameStrong
+                );
+
+
+                if (
+                    person.member_no
+                ) {
+
+                    nameCell.append(
+                        $('<div>')
+                        .addClass(
+                            'small text-muted'
+                        )
+                        .text(
+                            'Member No: ' +
+                            person.member_no
+                        )
+                    );
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Relationship
+                |--------------------------------------------------------------------------
+                */
+
+                const relationshipCell =
+                    $('<td>')
+                    .text(
+                        person.relationship ||
+                        ''
+                    );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Seating Status
+                |--------------------------------------------------------------------------
+                */
+
+                const seatingCell =
+                    $('<td>')
+                    .addClass(
+                        'text-center'
+                    );
+
+                if (person.seated) {
+
+                    const seatedBadge =
+                        $('<span>')
+                        .addClass(
+                            'badge bg-success'
+                        )
+                        .text('Seated');
+
+
+                    seatingCell.append(
+                        seatedBadge
+                    );
+
+
+                    if (person.table_label || person.seat_no) {
+
+                        let locationText = '';
+
+                        if (person.table_label) {
+                            locationText += person.table_label;
+                        }
+
+                        if (person.seat_no) {
+                            locationText +=
+                                (locationText ? ' - ' : '') +
+                                'Seat ' + person.seat_no;
+                        }
+
+                        seatingCell.append(
+                            $('<div>')
+                            .addClass(
+                                'small text-muted mt-1'
+                            )
+                            .text(locationText)
+                        );
+                    }
+
+                } else {
+
+                    seatingCell.append(
+
+                        $('<span>')
+                        .addClass(
+                            'badge bg-secondary'
+                        )
+                        .text(
+                            'Needs Seat'
+                        )
+
+                    );
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Build Row
+                |--------------------------------------------------------------------------
+                */
+
+                row.append(
+                    typeCell,
+                    nameCell,
+                    relationshipCell,
+                    seatingCell
+                );
+
+
+                $('#partyPeopleBody')
+                    .append(row);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Load Available Tables For Party
+            |--------------------------------------------------------------------------
+            */
+
+            function loadPartyTables(memberId) {
+                $('#partyTableError')
+                    .hide()
+                    .text('');
+
+
+                $('#partyTableList')
+                    .empty();
+
+
+                $('#partyTableLoading')
+                    .show();
+
+
+                $('#selected_party_table_id')
+                    .val('');
+
+
+                const url =
+                    partyTablesUrlTemplate.replace(
+                        '__MEMBER_ID__',
+                        memberId
+                    );
+
+
+                fetch(url, {
+
+                        method: 'GET',
+
+                        headers: {
+
+                            'Accept': 'application/json',
+
+                            'X-Requested-With': 'XMLHttpRequest'
+
+                        }
+
+                    })
+
+                    .then(async response => {
+
+                        const data =
+                            await response.json();
+
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                data.message ||
+                                'Unable to load table availability.'
+                            );
+                        }
+
+
+                        return data;
+
+                    })
+
+                    .then(data => {
+
+                        $('#partyTableLoading')
+                            .hide();
+
+
+                        if (
+                            !data.success ||
+                            !Array.isArray(data.tables)
+                        ) {
+
+                            throw new Error(
+                                'Table availability could not be loaded.'
+                            );
+                        }
+
+
+                        const partyNeedsSeat =
+                            data.party ?
+                            data.party.needs_seat :
+                            0;
+
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | No Seats Needed
+                        |--------------------------------------------------------------------------
+                        */
+
+                        if (partyNeedsSeat <= 0) {
+
+                            $('#partyTableList').html(
+
+                                '<div class="col-12">' +
+
+                                '<div class="alert alert-success mb-0">' +
+
+                                'Everyone in this party is already seated.' +
+
+                                '</div>' +
+
+                                '</div>'
+
+                            );
+
+                            return;
+                        }
+
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | Build Table Cards
+                        |--------------------------------------------------------------------------
+                        */
+
+                        let suitableTableFound =
+                            false;
+
+
+                        data.tables.forEach(function(table) {
+
+                            const canFit =
+                                table.can_fit_party === true;
+
+
+                            if (canFit) {
+                                suitableTableFound = true;
+                            }
+
+
+                            const cardClass =
+                                canFit ?
+                                'border-success party-table-option' :
+                                'border-secondary opacity-50';
+
+
+                            const buttonHtml =
+                                canFit
+
+                                ?
+                                `
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-success w-100 select-party-table-btn"
+                                        data-table-id="${table.table_id}"
+                                        data-table-name="${escapeHtml(table.table_name)}"
+                                    >
+                                        Select Table
+                                    </button>
+                                `
+
+                                :
+                                `
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary w-100"
+                                        disabled
+                                    >
+                                        Not Enough Seats
+                                    </button>
+                                `;
+
+
+                            const seatNumbers =
+                                Array.isArray(table.seat_numbers) ?
+                                table.seat_numbers.join(', ') :
+                                '';
+
+
+                            const html = `
+
+                            <div class="col-lg-4 col-md-6 mb-3">
+
+                                <div
+                                    class="card h-100 ${cardClass}"
+                                    data-party-table-card="${table.table_id}"
+                                >
+
+                                    <div class="card-body">
+
+                                        <h6 class="mb-2">
+                                            ${escapeHtml(table.table_name)}
+                                        </h6>
+
+
+                                        <div class="small text-muted mb-1">
+
+                                            Capacity:
+                                            <strong>
+                                                ${table.capacity}
+                                            </strong>
+
+                                        </div>
+
+
+                                        <div class="small mb-1">
+
+                                            Available Seats:
+
+                                            <strong class="${canFit ? 'text-success' : 'text-danger'}">
+
+                                                ${table.available_seats}
+
+                                            </strong>
+
+                                        </div>
+
+
+                                        <div class="small text-muted mb-3">
+
+                                            Seats:
+                                            ${escapeHtml(seatNumbers)}
+
+                                        </div>
+
+
+                                        ${buttonHtml}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        `;
+
+
+                            $('#partyTableList')
+                                .append(html);
+
+                        });
+
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | No Suitable Tables
+                        |--------------------------------------------------------------------------
+                        */
+
+                        if (!suitableTableFound) {
+
+                            $('#partyTableList')
+                                .prepend(
+
+                                    '<div class="col-12">' +
+
+                                    '<div class="alert alert-warning">' +
+
+                                    'No table currently has enough available seats for the entire unseated party.' +
+
+                                    '</div>' +
+
+                                    '</div>'
+
+                                );
+                        }
+
+                    })
+
+                    .catch(error => {
+
+                        $('#partyTableLoading')
+                            .hide();
+
+
+                        $('#partyTableError')
+                            .text(
+                                error.message
+                            )
+                            .show();
+
+                    });
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Select Party Table
+            |--------------------------------------------------------------------------
+            */
+
+            $(document).on(
+                'click',
+                '.select-party-table-btn',
+                function() {
+
+                    const tableId =
+                        $(this).data('table-id');
+
+
+                    const tableName =
+                        $(this).data('table-name');
+
+
+                    $('#selected_party_table_id')
+                        .val(tableId);
+
+                    $('#seat_party_table_id')
+                        .val(tableId);
+
+
+                    $('#seatPartyBtn')
+                        .prop(
+                            'disabled',
+                            false
+                        );
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Reset All Buttons
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $('.select-party-table-btn')
+                        .removeClass(
+                            'btn-success'
+                        )
+                        .addClass(
+                            'btn-outline-success'
+                        )
+                        .text(
+                            'Select Table'
+                        );
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Highlight Selected Table
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $(this)
+                        .removeClass(
+                            'btn-outline-success'
+                        )
+                        .addClass(
+                            'btn-success'
+                        )
+                        .text(
+                            'Selected - ' +
+                            tableName
+                        );
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Highlight Card
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $('[data-party-table-card]')
+                        .removeClass(
+                            'party-table-selected'
+                        );
+
+
+                    $('[data-party-table-card="' + tableId + '"]')
+                        .addClass(
+                            'party-table-selected'
+                        );
+
+                }
+            );
+
+            /*
+                |--------------------------------------------------------------------------
+                | Confirm Party Seating
+                |--------------------------------------------------------------------------
+                */
+
+            $('#seatPartyForm').on(
+                'submit',
+                function(event) {
+
+                    const tableId =
+                        $('#seat_party_table_id')
+                        .val();
+
+
+                    if (!tableId) {
+
+                        event.preventDefault();
+
+                        alert(
+                            'Please select a table first.'
+                        );
+
+                        return;
+                    }
+
+
+                    const confirmed =
+                        confirm(
+                            'Seat all currently unseated members of this party at the selected table?'
+                        );
+
+
+                    if (!confirmed) {
+
+                        event.preventDefault();
+                    }
+
+                }
+            );
+
         });
     </script>
 @endsection

@@ -163,6 +163,10 @@ Route::prefix('events/{eventId}/seating')->group(function () {
     Route::post('/seat/{seatId}/assign-guest', [EventSeatingController::class, 'assignGuest'])->name('events.seating.assign.guest');
     // Remove current assignment from seat
     Route::post('/seat/{seatId}/clear', [EventSeatingController::class, 'clearSeat'])->name('events.seating.clear');
+    // Seating Party Together
+    Route::get('member/{memberId}/party', [EventSeatingController::class, 'partyDetails'])->name('events.seating.party.details');
+    Route::get('member/{memberId}/party/tables', [EventSeatingController::class, 'partyAvailableTables'])->name('events.seating.party.tables');
+    Route::post('member/{memberId}/party/seat',  [EventSeatingController::class, 'seatPartyTogether'])->name('events.seating.party.seat');
 });
 
 
